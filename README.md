@@ -6,7 +6,7 @@
 
 ### 🌟 Why this benchmark matters?
 - 🔒 **Data Scarcity Challenge**  
-  **Vein image datasets are typically limited due to storage constraints and privacy concerns. Insufficient training samples per class often lead to overfitting in deep learning models (e.g., DNNs, CNNs, ViTs). Data augmentation is critical for expanding training datasets and improving model generalization.**  
+  **Vein image datasets are typically limited due to storage constraints and privacy concerns. Insufficient training samples per class often lead to overfitting in deep learning models (*e.g.*, DNNs, CNNs, ViTs). Data augmentation is critical for expanding training datasets and improving model generalization.**  
 - ⚠️ **Limitations of Current Approaches**  
   **Existing vein identification research relies heavily on empirical augmentation strategies:**
   - 🔄 **Majority of papers default to ``MixUp + CutMix`` combinations**
