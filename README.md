@@ -15,4 +15,24 @@
 ### 🚀 Our Contribution
 - 📊 **Systematic evaluation of augmentation techniques for vein identification**  
 - 🎯 **Optimal augmentation strategies tailored to different model architectures (CNN/ViT)**  
-- 🧪 **Objective benchmarks to guide researchers away from trial-and-error approaches**  
+- 🧪 **Objective benchmarks to guide researchers away from trial-and-error approaches**
+____
+
+### 1. Augmentation methods
+We divided the augmentations into three types: ``Sample-level``, ``Label-level``, and ``Specific-level``.
+
+- **Sample-level**
+  - Single-sample
+    - Comparing-based
+    - Cutting-based
+    - Masking-based
+  - Multi-samples
+    - Mixups
+  - Generating
+    - GANs
+    - Diffusion Model
+- **Label-level**
+  - Label Smooth
+  - Token Labeling
+  - Label Distribution
+- **Specific-level**
