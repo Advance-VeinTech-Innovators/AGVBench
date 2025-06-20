@@ -36,3 +36,30 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   - Token Labeling
   - Label Distribution
 - **Specific-level**
+
+### 2. Experiments Settings
+
+- **Datasets**
+  - TJU600
+  - VERA220
+  - CASIA200
+  - HKPU500
+- **Backbone**
+  - CNNs
+    - ResNet18/ResNet50: Classic backbone
+    - MobileNet v2: Effeicent backbone for devices
+    - StarLKNet: Large kernel backbone
+    - FVCNN/PCVNN/FVRASNet: Specific design backbone
+  - ViTs
+    - DeiT (tiny, small, base)
+    - ViT (small, base, large)
+    - Swin (tiny, small, base)
+  - **Settings**
+ 
+    | Optimizer | Batch Size | LR     | Scheduler     | Hyperparameters            |
+    | --------- | ---------- | ------ | -------------- | ------------------------- |
+    | SGD       | 32         | `0.01` | ✅ Cosine     | momentum=0.9, wd=1e-4      |
+    | AdamW     | 32         | `3e-4` | ✅ Cosine     | betas=(0.9, 0.98), wd=1e-2 |
+
+
+### 3. Analysis Studies
