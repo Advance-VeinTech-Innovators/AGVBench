@@ -55,8 +55,9 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
     - DeiT (tiny, small, base)
     - ViT (small, base, large)
     - Swin (tiny, small, base)
-  - **Settings**
- 
+  - **Settings**  
+    We resize the size of image to 3x224x224...
+    
     | Optimizer | Batch Size | LR     | Scheduler     | Hyperparameters            |
     | --------- | ---------- | ------ | -------------- | ------------------------- |
     | SGD       | 32         | `0.01` | ✅ Cosine     | momentum=0.9, wd=1e-4      |
