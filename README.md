@@ -23,12 +23,12 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 
 - **Sample-level**
   - Single-sample
-    - Comparing-based
-    - Cutting-based
-    - Masking-based
+    - Disruption-based: Flip, Rotate, Blur, Noisy
+    - Policy-based: AutoAug, RandAug, TeachAug, ColorEnhancement
+    - Cutting-based: YOCO, Cutout, GridMask, RandomErasing
   - Multi-samples
     - Mixups
-  - Generating
+  - Generating (This depends on the difficulty of coding, and if it is difficult to implement, we can choose not to include it.)
     - GANs
     - Diffusion Model
 - **Label-level**
@@ -44,6 +44,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   - VERA220
   - CASIA200
   - HKPU500
+  - We could build a ``Corrpution dataset/policy`` for the test set like ``CIFAR100-C/ImageNet-C``
 - **Backbone**
   - CNNs
     - ResNet18/ResNet50: Classic backbone
