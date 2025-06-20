@@ -11,7 +11,7 @@
   **Existing vein identification research relies heavily on empirical augmentation strategies:**
   - 🔄 **Majority of papers default to ``MixUp + CutMix`` combinations**
   - 🎨 **Some studies use basic methods like ``ColorJittering``**
-  - These practices lack systematic validation and may underutilize model potential due to suboptimal augmentation choices.
+- These practices lack systematic validation and may underutilize model potential due to suboptimal augmentation choices.
 ### 🚀 Our Contribution
 - 📊 **Systematic evaluation of augmentation techniques for vein identification**  
 - 🎯 **Optimal augmentation strategies tailored to different model architectures (CNN/ViT)**  
