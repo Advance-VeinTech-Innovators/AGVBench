@@ -53,7 +53,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 - **Backbone**
   - CNNs
     - ResNet18/ResNet50: Classic backbone
-    - MobileNet v2: Effeicent backbone for devices
+    - MobileNet v2: Effeicent backbone for mobile devices
     - StarLKNet: Large kernel backbone
     - FVCNN/PCVNN/FVRASNet: Specific design backbone for vein
   - ViTs
