@@ -4,9 +4,10 @@ from PIL import Image
 import seaborn as sns
 import matplotlib.pyplot as plt
 import sklearn.metrics as metric
+from sklearn.metrics import roc_curve
 
-from agvbench.models.utils import precision_recall_f1, support
-from agvbench.utils import print_log
+from openmixup.models.utils import precision_recall_f1, support
+from openmixup.utils import print_log
 
 from .registry import DATASETS
 from .base import BaseDataset
@@ -162,7 +163,6 @@ class ClassificationDataset(BaseDataset):
             plt.figure(figsize=(5, 5))
             sns.set_style("whitegrid", rc={'grid.linestyle': '--',
                                            "axes.edgecolor": '.20', })
-            # sns.set_style("whitegrid")
             plt.plot(x, x, color='r', linestyle='--', linewidth=1)
             plt.plot(acc, conf, color='b', linestyle='-', linewidth=1)
             legend = plt.legend(title='ECE: {:.1f}%'.format(results * 100), loc='lower right', frameon=False)
@@ -171,3 +171,27 @@ class ClassificationDataset(BaseDataset):
             plt.show()
 
         return results
+
+
+    def eer(self, score, num_class=600, name=None):
+        score = torch.tensor(score).cuda().cpu()
+        score = score.softmax(dim=1)
+        labels = torch.LongTensor(self.data_source.labels)
+        eer_labels = np.zeros((len(labels), num_class))  # total_num, num_class
+        for i in range(len(labels)):
+            labels_idx = int(labels[i])
+            eer_labels[i, labels_idx] = 1
+
+        score = np.array(score).reshape(-1)
+        eer_labels = np.array(eer_labels).reshape(-1)
+
+        fpr, tpr, thresholds = roc_curve(eer_labels, score)
+        fnr = 1 - tpr
+        eer_1 = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
+        eer_2 = fnr[np.nanargmin(np.absolute((fnr - fpr)))]
+        eer = (eer_1 + eer_2) / 2
+
+        np.save("fpr_{}.npy".format(name),fpr)
+        np.save("tpr_{}.npy".format(name), tpr)
+
+        return eer

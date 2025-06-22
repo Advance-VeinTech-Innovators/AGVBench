@@ -14,7 +14,7 @@ from .. import builder
 from ..registry import MODELS
 from ..augments.mixups import (cutmix, fmix, gridmix, mixup, resizemix, saliencymix, smoothmix,
                         alignmix, attentivemix, puzzlemix, transmix, snapmix,
-                        mixpro, tokenmix, smmix, tla, guidedmix)
+                        mixpro, tokenmix, smmix, tla, guidedmix, starmix, augmix)
 from ..augments.mixups.guidedmix import SpectralResidual
 from ..utils import PlotTensor
 
@@ -93,8 +93,8 @@ class MixUpClassification(BaseModel):
         }
         self.static_mode = {
             "mixup": mixup, "cutmix": cutmix, "fmix": fmix, "gridmix": gridmix,
-            "manifoldmix": self._manifoldmix, "saliencymix": saliencymix,
-            "smoothmix": smoothmix, "resizemix": resizemix,
+            "manifoldmix": self._manifoldmix, "saliencymix": saliencymix, "augmix": augmix,
+            "smoothmix": smoothmix, "resizemix": resizemix, "starmix": starmix
         }
         self.mix_args = dict(  # default settings
             alignmix=dict(eps=0.1, max_iter=100),
@@ -394,7 +394,7 @@ class MixUpClassification(BaseModel):
 
         # applying hand-crafted sample mixup methods
         elif cur_mode not in ["manifoldmix", ]:
-            if cur_mode in ["mixup", "cutmix", "saliencymix", "smoothmix", ]:
+            if cur_mode in ["mixup", "cutmix", "saliencymix", "smoothmix", "starmix"]:
                 img, gt_label = self.static_mode[cur_mode](
                     img, gt_label, cur_alpha, dist_mode=False, return_mask=return_mask)
             elif cur_mode in ["resizemix", "fmix", "gridmix", ]:

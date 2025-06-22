@@ -54,17 +54,18 @@ from .van import VAN
 from .vgg import VGG
 from .vig import PyramidVIG, VIG
 from .vision_transformer import TransformerEncoderLayer, VisionTransformer
+from .vision_transofmer_tome import ToMeTransformerEncoderLayer, ToMeVisionTransformer
 from .wide_resnet import WideResNet, WideResNet_Mix
 from .xcit import XCiT
+from .rmt import VisRetNet
 
+# For vein task
 from .fvrasnet import FVRASNet
 from .fvcnn import FVCNN
 from .pvcnn import PVCNN
 from .ivt import RMTransformer
 from .msvt import MultiScaleUnionTransformer
-from .vision_transofmer_tome import ToMeTransformerEncoderLayer, ToMeVisionTransformer
 from .starlknet import StarLKNet
-from .rmt import VisRetNet
 
 __all__ = [
     'AlexNet', 'BEiTViT', 'BEiTVisionTransformer', 'ContextCluster',
@@ -85,7 +86,6 @@ __all__ = [
     'T2T_ViT', 'TIMMBackbone', 'TransformerEncoderLayer',
     'UniFormer', 'VisionTransformer', 'VAN', 'VGG', 'PyramidVIG', 'VIG',
     'WideResNet', 'WideResNet_Mix', 'XCiT',
-    'ToMeTransformerEncoderLayer', 'ToMeVisionTransformer',
+    'ToMeTransformerEncoderLayer', 'ToMeVisionTransformer', 'VisRetNet'
     'StarLKNet', 'FVRASNet', 'PVCNN', 'FVCNN'
-    'VisRetNet'
 ]

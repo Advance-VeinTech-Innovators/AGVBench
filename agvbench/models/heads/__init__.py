@@ -23,5 +23,6 @@ __all__ = [
     'MoCoV3Head', 'MAEPretrainHead', 'MAELinprobeHead', 'MAEFinetuneHead', 'MAELinprobeHead',
     'MultiClsHead', 'MultiPrototypes', 'NormLinearClsHead', 'PixelMixBlock', 'RegHead',
     'SwAVHead', 'SimMIMHead', 'VisionTransformerClsHead', 'DistillationVisionTransformerClsHead',
-    'ClsRetNetHead', 'ClsVGGHead', "ClsFVRASHead", "ClsPVHead",
+    'ClsRetNetHead', 'ClsVGGHead', 
+    "ClsFVRASHead", "ClsPVHead",
 ]
