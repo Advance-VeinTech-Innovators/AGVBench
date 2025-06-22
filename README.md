@@ -81,11 +81,11 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   - 🎯 EER
   - 💥 Corruption (image perturbations) 
   - ⚔️ Adversarial Attack: FGSM, PGD
-  - 📊 Quality Assessment: PSNR（Peak Signal-to-Noise Ratio） / SSIM（Structural Similarity Index）
+  - 📊 Quality Assessment: PSNR(Peak Signal-to-Noise Ratio) / SSIM(Structural Similarity Index)
 
 ### 🧪 3. Analysis Studies
 
-  - ✂️ Occlusion（cutting-based & masking-based）
+  - ✂️ Occlusion(cutting-based & masking-based)
   - 🎯 Calibration
   - 🛡️ ROC Curves
   - ⏱️ Time-Cost
