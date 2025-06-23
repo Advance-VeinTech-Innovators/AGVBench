@@ -89,7 +89,6 @@ def parse_args():
                         help='GPU ID')
     parser.add_argument('--local_rank', help='set local_rank for torch.distributed.launch (torch<2.0.0)',
                         type=int, default=0)
-    parser.add_argument('--local-rank', type=int, default=0)
     parser.add_argument('--port', type=int, default=29500, help='port only works when launcher=="slurm"')
     parser.add_argument('--cfg-options', nargs='+', action=DictAction,
                         help='the configuration file`s options')

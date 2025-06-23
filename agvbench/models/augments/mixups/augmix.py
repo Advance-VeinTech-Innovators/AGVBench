@@ -76,6 +76,7 @@ def augmix(img,
 
     # normal mixup process
     if not dist_mode:
+        rand_index = torch.randperm(img.size(0)).cuda()
         if len(img.size()) == 4:  # [N, C, H, W]
             img_ = img[rand_index]
         else:
