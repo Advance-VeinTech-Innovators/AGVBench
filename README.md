@@ -30,19 +30,19 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 
 - **Sample-level**
   - Single-sample
-    1. Disruption-based: Flip, Rotate, Blur, Noisy
-    2. Policy-based: AutoAug, RandAug, TeachAug, ColorEnhancement
-    3. Cutting-based: YOCO, Cutout, GridMask, RandomErasing
+    1. [x] Disruption-based: Flip, Rotate, Blur, Noisy
+    2. [ ] Policy-based: AutoAug, RandAug, TeachAug, ColorEnhancement
+    3. [x] Cutting-based: YOCO, Cutout, GridMask, RandomErasing
   - Multi-samples
-    1. Mixups
+    1. [x] Mixups
   - Generating (*This depends on the difficulty of coding, and if it is difficult to implement, we can choose not to include it.*)
-    1. GANs
-    2. Diffusion Model
+    1. [ ] GANs
+    2. [ ] Diffusion Model
 - **Label-level**
-  - Label Smooth
-  - Token Labeling
-  - Label Distribution
-  - Label Propagation
+  - [x] Label Smooth
+  - [ ] Token Labeling
+  - [ ] Label Distribution
+  - [ ] Label Propagation
 - **Specific-level**
 
 ### 📊 2. Experiments Settings
@@ -59,14 +59,14 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   We could build a ``Corrpution dataset/policy`` for the test set like ``CIFAR100-C/ImageNet-C``
 - **Backbone**
   - CNNs
-    - ResNet18/ResNet50: Classic backbone
-    - MobileNet v2: Effeicent backbone for mobile devices
-    - StarLKNet: Large kernel backbone
-    - FVCNN/PCVNN/FVRASNet: Specific design backbone for vein
+    - [x] ResNet18/ResNet50: Classic backbone
+    - [x] MobileNet v2: Effeicent backbone for mobile devices
+    - [x] StarLKNet: Large kernel backbone
+    - [x] FVCNN/PCVNN/FVRASNet: Specific design backbone for vein
   - ViTs
-    - DeiT (tiny, small, base)
-    - ViT (small, base, large)
-    - Swin (tiny, small, base)
+    - [x] DeiT (tiny, small, base)
+    - [x] ViT (small, base, large)
+    - [x] Swin (tiny, small, base)
 - **Settings**
 
   We resize the size of image to 3x224x224...
