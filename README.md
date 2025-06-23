@@ -85,7 +85,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 
 ### 🧪 3. Analysis Studies
 
-  - [ ] ✂️ Occlusion(cutting-based & masking-based)
+  - [x] ✂️ Occlusion(cutting-based & masking-based)
   - [x] 🎯 Calibration
   - [x] 🛡️ ROC Curves
   - [ ] ⏱️ Time-Cost
