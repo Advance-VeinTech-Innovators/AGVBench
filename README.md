@@ -80,7 +80,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   - [x] 📉 Classification
   - [x] 🎯 EER
   - [ ] 💥 Corruption (image perturbations) 
-  - [ ] ⚔️ Adversarial Attack: FGSM, PGD
+  - [x] ⚔️ Adversarial Attack: FGSM, PGD
   - [ ] 📊 Quality Assessment: PSNR(Peak Signal-to-Noise Ratio) / SSIM(Structural Similarity Index)
 
 ### 🧪 3. Analysis Studies
