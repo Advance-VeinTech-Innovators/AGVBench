@@ -77,20 +77,20 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   | AdamW     | 32         | `3e-4` | ✅ Cosine     | betas=(0.9, 0.98), wd=1e-2 |
 
 - **Experiments**
-  - 📉 Classification
-  - 🎯 EER
-  - 💥 Corruption (image perturbations) 
-  - ⚔️ Adversarial Attack: FGSM, PGD
-  - 📊 Quality Assessment: PSNR(Peak Signal-to-Noise Ratio) / SSIM(Structural Similarity Index)
+  - [x] 📉 Classification
+  - [x] 🎯 EER
+  - [ ] 💥 Corruption (image perturbations) 
+  - [ ] ⚔️ Adversarial Attack: FGSM, PGD
+  - [ ] 📊 Quality Assessment: PSNR(Peak Signal-to-Noise Ratio) / SSIM(Structural Similarity Index)
 
 ### 🧪 3. Analysis Studies
 
-  - ✂️ Occlusion(cutting-based & masking-based)
-  - 🎯 Calibration
-  - 🛡️ ROC Curves
-  - ⏱️ Time-Cost
-  - 🧬 t-SNE Visualization
-  - 🔍 CAM Visualization
+  - [ ] ✂️ Occlusion(cutting-based & masking-based)
+  - [x] 🎯 Calibration
+  - [x] 🛡️ ROC Curves
+  - [ ] ⏱️ Time-Cost
+  - [x] 🧬 t-SNE Visualization
+  - [x] 🔍 CAM Visualization
 
 ---
 
