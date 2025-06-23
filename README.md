@@ -105,4 +105,13 @@ Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), 
   journal={arXiv preprint arXiv:2405.12721},
   year={2024}
 }
+
+@inproceedings{jin2025starmixup,
+  title={StarMixup: A More Suitable Mixup Method for Palm-Vein Identification},
+  author={Jin, Xin and Zhu, Hongyu and Fong, Simon and Marques, Jo{\~a}o Alexandre Lobo and Qin, Huafeng and Jiang, Yun},
+  booktitle={2025 7th International Symposium on Computational and Business Intelligence (ISCBI)},
+  pages={83--87},
+  year={2025},
+  organization={IEEE}
+}
 ```
