@@ -13,7 +13,7 @@ from agvbench.datasets import build_dataloader, build_dataset
 from agvbench.models import build_model
 from agvbench.utils import (get_root_logger, dist_forward_collect, print_log,
                              setup_multi_processes, nondist_forward_collect, traverse_replace,
-                             fgsm_nondist_forward_collect)
+                             fgsm_nondist_forward_collect, pgd_nondist_forward_collect)
 
 
 def single_gpu_test(model, data_loader):
@@ -24,12 +24,19 @@ def single_gpu_test(model, data_loader):
     return results
 
 
-def fgsm_test(model, data_loader, head, dataset='cifar'):
+def adver_attack_test(model, data_loader, head, dataset='cifar', mode="FGSM"):
     model.eval()
     func = lambda **x: model(mode='test', **x)
-    results = fgsm_nondist_forward_collect(func, data_loader,
-                                           len(data_loader.dataset), head, dataset)
+    if mode == "FGSM":
+        results = fgsm_nondist_forward_collect(func, data_loader,
+                                            len(data_loader.dataset), head, dataset)
+    elif mode == "PGD":
+        results = pgd_nondist_forward_collect(func, data_loader,
+                                            len(data_loader.dataset), head, dataset, random_start=True, targeted=False)
+    else:
+        raise ValueError("Wrong Adversarial Attack method.")
     return results
+
 
 
 def multi_gpu_test(model, data_loader):
@@ -168,9 +175,12 @@ def main():
 
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
-        if args.keys == 'fgsm':
-            print_log("FGSM (Fast Gradient Sign Method) compute adversarial robustness error", logger=logger)
-            outputs = fgsm_test(model, data_loader, args.head, args.dataset)
+        if args.keys == 'fgsm' or 'pgd':
+            if args.keys == 'fgsm':
+                print_log("FGSM (Fast Gradient Sign Method) compute adversarial robustness error", logger=logger)
+            else:
+                print_log("PGD (Projected Gradient Descent) compute adversarial robustness error", logger=logger)
+            outputs = adver_attack_test(model, data_loader, args.head, args.dataset)
 
             rank, _ = get_dist_info()
             if rank == 0:
