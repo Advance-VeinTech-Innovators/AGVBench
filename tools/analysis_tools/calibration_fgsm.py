@@ -24,13 +24,13 @@ def single_gpu_test(model, data_loader):
     return results
 
 
-def adver_attack_test(model, data_loader, head, dataset='cifar', mode="FGSM"):
+def adver_attack_test(model, data_loader, head, dataset='cifar', mode="fgsm"):
     model.eval()
     func = lambda **x: model(mode='test', **x)
-    if mode == "FGSM":
+    if mode == "fgsm":
         results = fgsm_nondist_forward_collect(func, data_loader,
                                             len(data_loader.dataset), head, dataset)
-    elif mode == "PGD":
+    elif mode == "pgd":
         results = pgd_nondist_forward_collect(func, data_loader,
                                             len(data_loader.dataset), head, dataset, random_start=True, targeted=False)
     else:
@@ -180,7 +180,7 @@ def main():
                 print_log("FGSM (Fast Gradient Sign Method) compute adversarial robustness error", logger=logger)
             else:
                 print_log("PGD (Projected Gradient Descent) compute adversarial robustness error", logger=logger)
-            outputs = adver_attack_test(model, data_loader, args.head, args.dataset)
+            outputs = adver_attack_test(model, data_loader, args.head, args.dataset, mode=args.keys)
 
             rank, _ = get_dist_info()
             if rank == 0:
