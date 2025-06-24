@@ -252,6 +252,7 @@ def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='cifar
         mean, std = [0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.201]
     else:
         mean, std =[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+    mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
@@ -292,6 +293,7 @@ def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='cifar'
         mean, std = [0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.201]
     else:
         mean, std =[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+    mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
