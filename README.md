@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+ - **2025.06.24** Fixed the bugs on `calibration_fgsm.py` and support PGD avdersarial attack.
  - **2025.06.23** We update some analysis tools code: `compute_eer.py`, `analyze_sparse.py`, `save_purning_model.py`, `tsne_clustering_visualization.py`, and `draw_eer.py` files for your analysis study. Modify the `classification.py` file in `agvbench/datasets/` for computing the eer score.
 - **2025.06.22** we support two mix augmentation method **"AugMix"[[ICLR 2020]](https://arxiv.org/abs/1912.02781)** and **"StarMixup"[[ICSBI 2025]](https://ieeexplore.ieee.org/abstract/document/11015373/)**. 
 - **2025.06.21** We relase the core codebase files.  
