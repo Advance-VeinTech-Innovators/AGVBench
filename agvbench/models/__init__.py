@@ -6,6 +6,4 @@ from .classifiers import *
 from .necks import *
 from .losses import *
 from .memories import *
-from .selfsup import *
-from .semisup import *
 from .registry import (BACKBONES, MODELS, NECKS, MEMORIES, HEADS, LOSSES)
