@@ -95,7 +95,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 
 ---
 
-Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), Haiyang Li ([@OceanLee66](https://github.com/OceanLee66)), Jing Chen ([@IsJingChen](https://github.com/IsJingChen)), Yuming Fu, Hongyu Zhu and Hongchao Liao.
+Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), Haiyang Li ([@OceanLee66](https://github.com/OceanLee66)), Jing Chen, Yuming Fu, Hongyu Zhu and Hongchao Liao.
 
 ### 😉 Citation
 **🤗 If you feel that our work has contributed to your research, please cite it. Thanks.**  
