@@ -6,15 +6,15 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional
 from mmcv.runner import force_fp32, load_checkpoint
-from agvbench.utils import print_log
+from openmixup.utils import print_log
 from torch.autograd import Variable
 
 from .base_model import BaseModel
 from .. import builder
 from ..registry import MODELS
-from ..augments.mixups import (cutmix, fmix, gridmix, mixup, resizemix, saliencymix, smoothmix,
+from ..augments import (cutmix, fmix, gridmix, mixup, resizemix, saliencymix, smoothmix,
                         alignmix, attentivemix, puzzlemix, transmix, snapmix,
-                        mixpro, tokenmix, smmix, tla, guidedmix, starmix, augmix)
+                        mixpro, tokenmix, smmix, tla, guidedmix, augmix, starmix)
 from ..augments.mixups.guidedmix import SpectralResidual
 from ..utils import PlotTensor
 
@@ -57,6 +57,7 @@ class MixUpClassification(BaseModel):
                  pretrained=None,
                  pretrained_k=None,
                  cosine_update=False,
+                 save=True,
                  save_name='MixedSamples',
                  debug_mode=True,
                  init_cfg=None,
@@ -93,10 +94,11 @@ class MixUpClassification(BaseModel):
         }
         self.static_mode = {
             "mixup": mixup, "cutmix": cutmix, "fmix": fmix, "gridmix": gridmix,
-            "manifoldmix": self._manifoldmix, "saliencymix": saliencymix, "augmix": augmix,
-            "smoothmix": smoothmix, "resizemix": resizemix, "starmix": starmix
+            "manifoldmix": self._manifoldmix, "saliencymix": saliencymix,
+            "smoothmix": smoothmix, "resizemix": resizemix, "starmix": starmix, "augmix": augmix,
         }
         self.mix_args = dict(  # default settings
+            augmix=dict(mixture_depth=-1, mixture_width=3, severity=1),
             alignmix=dict(eps=0.1, max_iter=100),
             attentivemix=dict(grid_size=32, top_k=6, beta=8),
             automix=dict(mask_adjust=0, lam_margin=0),
@@ -147,12 +149,12 @@ class MixUpClassification(BaseModel):
             print_log("Warning: the number of mix_mode={} is less than mix_repeat={}.".format(
                 self.mix_mode, self.mix_repeat))
         self.debug_mode = debug_mode
+        self.save = bool(save)
         self.save_name = str(save_name)
-        self.save = False
         self.ploter = PlotTensor(apply_inv=True)
         self.init_weights(pretrained=pretrained, pretrained_k=pretrained_k)
 
-        # KL for SMMix
+        # KL for official SMMix loss
         self.kl_layer = torch.nn.KLDivLoss(reduction='batchmean').cuda()
 
     def init_weights(self, pretrained=None, pretrained_k=None):
@@ -370,6 +372,7 @@ class MixUpClassification(BaseModel):
                                      Now, the setting is: return mask:{} and offical set: {}".format(return_mask,
                                                                                                      offical_set))
                 if return_mask:
+                    x_ = img.clone().detach()
                     img, gt_label, mask = smmix(img, gt_label, attn, **mix_args)
                 else:
                     img, gt_label = smmix(img, gt_label, attn, **mix_args)
@@ -377,6 +380,7 @@ class MixUpClassification(BaseModel):
                     # Masked sample classification
                     x_t = self.backbone(img * mask[0])
                     x_s = self.backbone(img.flip(0) * mask[-1])
+                    x_ = self.backbone(x_)
             # Mixed sample classification for ViTs-based Mixup methods
             x = self.backbone(img)
 
@@ -401,6 +405,10 @@ class MixUpClassification(BaseModel):
                 mix_args = dict(alpha=cur_alpha, dist_mode=False, return_mask=return_mask,
                                 **self.mix_args[cur_mode])
                 img, gt_label = self.static_mode[cur_mode](img, gt_label, **mix_args)
+            elif cur_mode == "augmix":
+                mix_args = dict(alpha=cur_alpha, dist_mode=False, return_mask=return_mask,
+                                **self.mix_args[cur_mode])
+                img, lam = self.static_mode[cur_mode](img, gt_label, **mix_args)
             else:
                 assert cur_mode == "vanilla" and return_mask == False
             if return_mask:
@@ -559,6 +567,7 @@ class MixUpClassification(BaseModel):
         img = torch.cat((img_mixed[:4], img_mixed[4:8], img_mixed[8:12]), dim=0)
         title_name = "{}, lam={}".format(mix_mode, lam) \
             # if isinstance(lam, float) else mix_mode
+        print(self.save_name)
         assert self.save_name.find(".png") != -1
         self.ploter.plot(
             img, nrow=4, title_name=title_name, save_name=self.save_name)
