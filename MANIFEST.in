@@ -1,0 +1,3 @@
+include requirements/*.txt
+recursive-include agvbench/.mim/configs *.py *.yml
+recursive-include agvbench/.mim/tools *.sh *.py
