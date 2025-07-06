@@ -35,7 +35,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
        2. [x] Rotate
        3. [ ] Blur
        4. [ ] Noisy
-       5. [x] Translation, 
+       5. [x] Translation
     2. Policy-based: 
        1. [x] AutoAugment
        2. [x] RandAugment
