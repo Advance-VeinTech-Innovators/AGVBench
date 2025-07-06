@@ -151,18 +151,17 @@ Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), 
 }
 ```
 
-
-| 模块 | 建议 |
-| --- | ---- |
-| **Label-level 增强模块** | 可以考虑明确每种标签增强的输入需求。例如 FCM/LP/Manifold 依赖 feature embedding，建议加一句：`requires extracted features from pretrained encoder.` |
-| **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
-| **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
-| **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充； |
-
 ## Questions
 
 1. 是否需要扩展到指静脉？
 2. 是否需要分开Vein-sepcific的数据增强方法？
+
+| Module | Suggestions |
+| --- | ---- |
+| **Label-level Augmentation Module** | 可以考虑明确每种标签增强的输入需求。例如 FCM/LP/Manifold 依赖 feature embedding，建议加一句：`requires extracted features from pretrained encoder.` |
+| **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
+| **Manifold Explain** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
+| **More Analysis Metircs** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充； |
   
 ## Paper Plan
 **Titles**
