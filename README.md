@@ -38,6 +38,9 @@ pip install openmim
 mim install mmcv-full
 git clone https://github.com/Advance-VeinTech-Innovators/AGVBench.git
 cd agvbench
+pip install -r requirements/readthedocs.txt
+pip install -r requirements/runtime.txt
+pip install -r requirements/tests.txt
 python setup.py develop
 ```
 
