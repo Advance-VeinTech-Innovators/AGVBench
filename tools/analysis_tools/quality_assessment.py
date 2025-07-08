@@ -10,17 +10,20 @@ import numpy as np
 import cv2
 from PIL import Image
 import matplotlib.pyplot as plt
-from skimage.metrics import structural_similarity as ssim
+try:
+    from skimage.metrics import structural_similarity as ssim
+except:
+    ssim = None
 
 from ..agvbench.models.augments.mixups import (
                 cutmix, fmix, gridmix, mixup, resizemix, smoothmix,
-                augmix, starmix)
+                augmix, starmix, augmix)
 from ..agvbench.models.augments.basic import yoco
-
 import mmcv
 from mmcv import DictAction
+from agvbench.utils import get_root_logger, print_log, setup_multi_processes, traverse_replace
 
-def psnr(img1, img2):
+def PSNR(img1, img2):
     """
     Calculate Peak Signal-to-Noise Ratio (PSNR).
 
@@ -38,7 +41,7 @@ def psnr(img1, img2):
     psnr = 10 * np.log10((max_pixel ** 2) / mse)
     return psnr
 
-def ssim(img1, img2):
+def SSIM(img1, img2):
     """
     Calculate Structural Similarity Index (SSIM).
 
@@ -174,8 +177,8 @@ def main():
     auged_img = augmentations(img, args.method, aug_list, args.value)
 
     img, auged_img = img.cpu().numpy(), auged_img.cpu().numpy()
-    psrn = psnr(img, auged_img)
-    ssim = ssim(img, auged_img)
+    psrn = PSNR(auged_img, img)
+    ssim = SSIM(auged_img, img)
     print_log(f"The PSRN of {args.method} method is {psrn}", logger=logger)
     print_log(f"The SSIM of {args.method} method is {ssim}", logger=logger)
 

@@ -245,13 +245,19 @@ def occlusion_forward_collect(func, data_loader, length, drop_ratio, drop_size):
     return results_all
 
 
-def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='cifar'):
+def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='vera220'):
 
     eps = 8
-    if dataset == 'cifar':
-        mean, std = [0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.201]
+    if dataset == 'vera220':
+        mean=[0.4399, 0.4399, 0.4399], std=[0.114, 0.114, 0.114]
+    elif dataset == 'tju600':
+        mean=[0.382, 0.382, 0.382], std=[0.088, 0.088, 0.088]
+    elif dataset == 'hkpu500':
+        mean=[0.556, 0.556, 0.556], std=[0.047, 0.047, 0.047]
+    elif dataset == 'casia200':
+        mean=[0.471, 0.471, 0.471], std=[0.067, 0.067, 0.067]
     else:
-        mean, std =[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+        raise ValueError("Please choose a correct dataset for evluation.")
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
@@ -283,15 +289,21 @@ def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='cifar
     return results_all
 
 
-def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='cifar', random_start=True, targeted=False):
+def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera220', random_start=True, targeted=False):
 
     eps = 8
     alpha = 2
     steps = 10
-    if dataset == 'cifar':
-        mean, std = [0.4914, 0.4822, 0.4465], [0.2023, 0.1994, 0.201]
+    if dataset == 'vera220':
+        mean=[0.4399, 0.4399, 0.4399], std=[0.114, 0.114, 0.114]
+    elif dataset == 'tju600':
+        mean=[0.382, 0.382, 0.382], std=[0.088, 0.088, 0.088]
+    elif dataset == 'hkpu500':
+        mean=[0.556, 0.556, 0.556], std=[0.047, 0.047, 0.047]
+    elif dataset == 'casia200':
+        mean=[0.471, 0.471, 0.471], std=[0.067, 0.067, 0.067]
     else:
-        mean, std =[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+        raise ValueError("Please choose a correct dataset for evluation.")
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []

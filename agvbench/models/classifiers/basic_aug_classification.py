@@ -7,13 +7,10 @@ import torch.nn.functional as F
 import torchvision.transforms.functional
 from mmcv.runner import force_fp32, load_checkpoint
 from agvbench.utils import print_log
-from torch.autograd import Variable
-
 from .base_model import BaseModel
 from .. import builder
 from ..registry import MODELS
-from ..augments.basic import (cutout, gridmask, ricap, yoco
-                                )
+from ..augments.basic import (cutout, gridmask, ricap, yoco, spnoise, randomblur)
 from ..utils import PlotTensor
 
 
@@ -49,7 +46,6 @@ class BasicAugClassification(BaseModel):
                  aug_repeat=False,
                  pretrained=None,
                  pretrained_k=None,
-                 cosine_update=False,
                  save_name='AugedSamples',
                  debug_mode=True,
                  init_cfg=None,
@@ -68,7 +64,7 @@ class BasicAugClassification(BaseModel):
         # augmentation args
         self.aug_mode = aug_mode if isinstance(aug_mode, list) else [str(aug_mode)]
         self.masking_mode = {
-            "cutout": cutout, "gridmask": gridmask,
+            "cutout": cutout, "gridmask": gridmask, "spnoise": spnoise, "randomblur": randomblur,
         }
         self.cutting_mode = {
             "ricap": ricap, "yoco": yoco,
@@ -77,6 +73,8 @@ class BasicAugClassification(BaseModel):
             cutout=dict(),
             gridmask=dict(n_holes=(2, 6), hole_aspect_ratio=1.,
                          cut_area_ratio=(0.5, 1), cut_aspect_ratio=(0.5, 2)),
+            spnoise=dict(prob=0.1, noise_type='random'),
+            randomblur=dict(),
             ricap=dict(choose_num=2,),
             yoco=dict(),
             vanilla=dict(),
@@ -162,7 +160,7 @@ class BasicAugClassification(BaseModel):
         return_mask, mask = False, None  # return sample mask in [N, 1, H, W]
         
         # applying masking sample augmentation methods
-        if cur_mode in ["cutout", "gridmask"]:
+        if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur"]:
             img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask)
             if return_mask:
                 img, mask = img  # (img, mask): get mask
