@@ -16,4 +16,3 @@ timm
 tqdm
 torch
 torchvision
-openmixup

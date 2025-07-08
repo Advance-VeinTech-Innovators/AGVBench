@@ -25,6 +25,23 @@ ____
 
 ___
 
+
+### Installation
+
+AGVBench is compatible with **Python 3.6/3.7/3.8/3.9** and **PyTorch >= 1.6**. Here are quick installation steps for development:
+
+```shell
+conda create -n agvbench python=3.8 pytorch=1.12 cudatoolkit=11.3 torchvision -c pytorch -y
+conda activate agvbench
+pip install openmim
+mim install mmcv-full
+git clone https://github.com/Advance-VeinTech-Innovators/AGVBench.git
+cd agvbench
+python setup.py develop
+```
+
+___
+
 ### 🐳 1. Augmentation methods
 We divided the augmentations into three types: ``Sample-level``, ``Label-level``, and ``Specific-level``.
 

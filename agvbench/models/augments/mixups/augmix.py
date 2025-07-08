@@ -72,14 +72,9 @@ def augmix(img,
 
     # normal mixup process
     if not dist_mode:
-        rand_index = torch.randperm(img.size(0)).cuda()
+        rand_index = torch.randperm(img.size(0))
         if len(img.size()) == 4:  # [N, C, H, W]
             img_ = img[rand_index]
-        else:
-            assert img.dim() == 5  # semi-supervised img [N, 2, C, H, W]
-            # * notice that the rank of two groups of img is fixed
-            img_ = img[:, 1, ...].contiguous()
-            img = img[:, 0, ...].contiguous()
 
         img = img.cpu().numpy()
         mix = np.zeros_like(img)
@@ -90,7 +85,9 @@ def augmix(img,
                 op = np.random.choice(augmentations)
                 for j in range(img_aug.shape[0]):
                     img_aug[j] = apply_op(img_aug[j], op, severity)
-            mix += ws[i] * normalize(img_aug)
-        img = (1 - lam) * normalize(img) + lam * mix
+            mix += ws[i] * img_aug
+        img = (1 - lam) * img + lam * mix
+            # mix += ws[i] * normalize(img_aug)
+        # img = (1 - lam) * normalize(img) + lam * mix
 
         return torch.from_numpy(img).cuda().float(), lam

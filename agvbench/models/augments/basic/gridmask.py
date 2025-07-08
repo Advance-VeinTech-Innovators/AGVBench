@@ -110,11 +110,6 @@ def gridmask(img,
 
     # normal mixup process
     if not dist_mode:
-        rand_index = torch.randperm(img.size(0)).cuda()
-        if len(img.size()) == 5:  # semi-supervised img [N, 2, C, H, W]
-            # * notice that the rank of two groups of img is fixed
-            img_ = img[:, 1, ...].contiguous()
-            img = img[:, 0, ...].contiguous()
 
         mask = rand_grid(lam, img.size(), cut_area_ratio, cut_aspect_ratio,
                          n_holes, hole_aspect_ratio)

@@ -24,15 +24,15 @@ def spnoise(img,
     """
 
     if not dist_mode:
-        if len(img.size()) == 5:  # e.g., semi-supervised [N, 2, C, H, W]
-            img = img[:, 0, ...].contiguous()
-
         N, C, H, W = img.shape
         device = img.device
         mask = torch.rand((N, 1, H, W), device=device)
 
-        if noise_type is 'random':
-            salt_or_pepper = np.random.choice(['salt', 'pepper'])
+        if noise_type == 'random':
+            if np.random.rand() < 0.5:
+                salt_or_pepper = torch.ones((N, 1, H, W), device=device)
+            else:
+                salt_or_pepper = torch.zeros((N, 1, H, W), device=device)
         elif noise_type == 'salt':
             salt_or_pepper = torch.ones((N, 1, H, W), device=device)
         elif noise_type == 'pepper':

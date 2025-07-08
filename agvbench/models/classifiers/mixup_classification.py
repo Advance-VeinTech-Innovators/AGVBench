@@ -6,13 +6,13 @@ import torch
 import torch.nn.functional as F
 import torchvision.transforms.functional
 from mmcv.runner import force_fp32, load_checkpoint
-from openmixup.utils import print_log
+from agvbench.utils import print_log
 from torch.autograd import Variable
 
 from .base_model import BaseModel
 from .. import builder
 from ..registry import MODELS
-from ..augments import (cutmix, fmix, gridmix, mixup, resizemix, saliencymix, smoothmix,
+from ..augments.mixups import (cutmix, fmix, gridmix, mixup, resizemix, saliencymix, smoothmix,
                         alignmix, attentivemix, puzzlemix, transmix, snapmix,
                         mixpro, tokenmix, smmix, tla, guidedmix, augmix, starmix)
 from ..augments.mixups.guidedmix import SpectralResidual

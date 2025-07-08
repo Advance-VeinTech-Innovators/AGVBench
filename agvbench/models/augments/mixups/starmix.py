@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn.functional as F
-from openmixup.models.utils import batch_shuffle_ddp
+from agvbench.models.utils import batch_shuffle_ddp
 
 
 @torch.no_grad()

@@ -20,7 +20,6 @@ from .layers import channel_shuffle, ConvWS2d, conv_ws_2d, DropPath, InvertedRes
    CAETransformerRegressorLayer, RelativePositionBias, \
    lecun_normal_init, trunc_normal_init, lecun_normal_, trunc_normal_, \
    ResLayerExtraNorm
-from .target_generators import CLIPGenerator, DALLEncoder, DALLDecoder, HOGGenerator, VQKD
 from .evaluation import calculate_confusion_matrix, f1_score, precision, recall, precision_recall_f1, \
    support, pearson_correlation, spearman_correlation, regression_error, \
    average_precision, mAP, average_performance
@@ -46,7 +45,6 @@ __all__ = [
    'ConditionalPositionEncoding', 'resize_pos_embed', 'resize_relative_position_bias_table',
    'FourierEmbed', 'RotaryEmbed', 'PositionEncodingFourier', 'CAETransformerRegressorLayer', 'RelativePositionBias',
    'lecun_normal_init', 'trunc_normal_init', 'lecun_normal_', 'trunc_normal_', 'ResLayerExtraNorm',
-   'CLIPGenerator', 'DALLEncoder', 'DALLDecoder', 'HOGGenerator', 'VQKD',
    'calculate_confusion_matrix', 'f1_score', 'precision', 'recall', 'precision_recall_f1', 'support',
    'pearson_correlation', 'spearman_correlation', 'regression_error',
    'average_precision', 'mAP', 'average_performance',

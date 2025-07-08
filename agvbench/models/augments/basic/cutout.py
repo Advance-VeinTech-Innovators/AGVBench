@@ -59,10 +59,6 @@ def cutout(img,
 
     # normal mixup process
     if not dist_mode:
-        if len(img.size()) == 5:   # semi-supervised img [N, 2, C, H, W]
-            # * notice that the rank of two groups of img is fixed
-            img_ = img[:, 1, ...].contiguous()
-            img = img[:, 0, ...].contiguous()
         _, _, h, w = img.size()
 
         if not return_mask:

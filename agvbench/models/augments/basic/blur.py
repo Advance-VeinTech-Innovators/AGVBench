@@ -21,9 +21,6 @@ def randomblur(img,
         return_mask (bool): Return blur mask (here, just kernel size per sample)
     """
 
-    if len(img.size()) == 5:  # semi-supervised [N, 2, C, H, W]
-        img = img[:, 0, ...].contiguous()
-
     N, C, H, W = img.shape
     device = img.device
 

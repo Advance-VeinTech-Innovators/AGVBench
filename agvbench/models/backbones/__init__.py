@@ -86,6 +86,6 @@ __all__ = [
     'T2T_ViT', 'TIMMBackbone', 'TransformerEncoderLayer',
     'UniFormer', 'VisionTransformer', 'VAN', 'VGG', 'PyramidVIG', 'VIG',
     'WideResNet', 'WideResNet_Mix', 'XCiT',
-    'ToMeTransformerEncoderLayer', 'ToMeVisionTransformer', 'VisRetNet'
+    'ToMeTransformerEncoderLayer', 'ToMeVisionTransformer', 'VisRetNet',
     'StarLKNet', 'FVRASNet', 'PVCNN', 'FVCNN'
 ]
