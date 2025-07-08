@@ -10,7 +10,7 @@ from mmcv.runner import get_dist_info, load_checkpoint
 from agvbench.datasets.registry import PIPELINES
 from agvbench.models import build_model
 from agvbench.models.utils import show_result
-from avgbench.utils import (build_from_cfg, dist_forward_collect, 
+from agvbench.utils import (build_from_cfg, dist_forward_collect, 
                              nondist_forward_collect)
 
 

@@ -11,6 +11,7 @@ from .base_model import BaseModel
 from .. import builder
 from ..registry import MODELS
 from ..augments.basic import (cutout, gridmask, ricap, yoco, spnoise, randomblur)
+from ..augments.basic.softaugment import softaugment
 from ..utils import PlotTensor
 
 
@@ -69,6 +70,9 @@ class BasicAugClassification(BaseModel):
         self.cutting_mode = {
             "ricap": ricap, "yoco": yoco,
         }
+        self.policy_mode = {
+            "softaugment": softaugment,
+        }
         self.aug_args = dict(  # default settings
             cutout=dict(),
             gridmask=dict(n_holes=(2, 6), hole_aspect_ratio=1.,
@@ -77,9 +81,11 @@ class BasicAugClassification(BaseModel):
             randomblur=dict(),
             ricap=dict(choose_num=2,),
             yoco=dict(),
+            softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
+                        iou=False, n_classes=220),
             vanilla=dict(),
         )
-        _supported_mode = ["vanilla"] + list(self.masking_mode.keys()) + list(self.cutting_mode.keys())
+        _supported_mode = ["vanilla"] + list(self.masking_mode.keys()) + list(self.cutting_mode.keys()) + list(self.policy_mode.keys())
         for _mode in _supported_mode:
             self.aug_args[_mode].update(aug_args.get(_mode, dict()))  # update aug_args
         for _mode in self.aug_mode:
@@ -169,6 +175,11 @@ class BasicAugClassification(BaseModel):
                 img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask)
             elif cur_mode == 'ricap':
                 img, gt_label = self.cutting_mode[cur_mode](img, gt_label, cur_alpha, dist_mode=False, return_mask=return_mask)
+        elif cur_mode in ["softaugment", "keepaugment"]:
+            if cur_mode == 'softaugment':
+                img = self.policy_mode[cur_mode](img)
+        else:
+            assert cur_mode == "vanilla"
         x = self.backbone(img)
 
         # augmentation loss

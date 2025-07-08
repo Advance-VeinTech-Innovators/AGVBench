@@ -18,21 +18,19 @@ def main():
     img = Image.open("demo/demo.jpg")
     img = transform_vis(img).unsqueeze(0)
 
-    # img = randomblur(img)
-    # img = cutout(img)
-    # img = gridmask(img)
-    # img = spnoise(img)
-    # img = ricap(img)
-    # img = yoco(img)
-    # img, _ = augmix(img)
+    img = randomblur(img)
+    img = cutout(img)
+    img = gridmask(img)
+    img = spnoise(img)
+    img = ricap(img)
+    img = yoco(img)
+    img, _ = augmix(img)
     img, lam = softaugment(img)
-    print(lam)
-    save_image = transforms.ToPILImage()
-    img = save_image(img.squeeze(0))
-    img = img.convert("RGB")
-    # Save the processed image
-    img.save('softaug.png')
-    raise ValueError("debugging")
+    # save_image = transforms.ToPILImage()
+    # img = save_image(img.squeeze(0))
+    # img = img.convert("RGB")
+    # img.save('softaug.png')
+    # raise ValueError("debugging")
 
 
 if __name__=="__main__":

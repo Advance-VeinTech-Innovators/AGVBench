@@ -6,8 +6,8 @@ import matplotlib.pyplot as plt
 import sklearn.metrics as metric
 from sklearn.metrics import roc_curve
 
-from openmixup.models.utils import precision_recall_f1, support
-from openmixup.utils import print_log
+from agvbench.models.utils import precision_recall_f1, support
+from agvbench.utils import print_log
 
 from .registry import DATASETS
 from .base import BaseDataset
