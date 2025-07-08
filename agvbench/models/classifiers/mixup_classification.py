@@ -57,7 +57,7 @@ class MixUpClassification(BaseModel):
                  pretrained=None,
                  pretrained_k=None,
                  cosine_update=False,
-                 save=True,
+                 save=False,
                  save_name='MixedSamples',
                  debug_mode=True,
                  init_cfg=None,
@@ -406,9 +406,9 @@ class MixUpClassification(BaseModel):
                                 **self.mix_args[cur_mode])
                 img, gt_label = self.static_mode[cur_mode](img, gt_label, **mix_args)
             elif cur_mode == "augmix":
-                mix_args = dict(alpha=cur_alpha, dist_mode=False, return_mask=return_mask,
+                mix_args = dict(alpha=cur_alpha, dist_mode=False,
                                 **self.mix_args[cur_mode])
-                img, lam = self.static_mode[cur_mode](img, gt_label, **mix_args)
+                img, _ = self.static_mode[cur_mode](img, **mix_args)
             else:
                 assert cur_mode == "vanilla" and return_mask == False
             if return_mask:

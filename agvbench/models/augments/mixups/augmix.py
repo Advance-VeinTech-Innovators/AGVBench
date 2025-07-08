@@ -12,8 +12,8 @@ def augmix(img,
            mixture_depth=-1,
            mixture_width=3,
            severity=1,
-           mean=None,
-           std=None,
+           mean=[0.4914, 0.4822, 0.4465],
+           std=[0.2023, 0.1994, 0.2010],
            dist_mode=False,
            **kwargs):
     r""" AugMix augmentation.
@@ -35,7 +35,7 @@ def augmix(img,
             and self-supervised methods.
     """
 
-    def normalize(image):
+    def normalize(image, mean, std):
         """Normalize input image channel-wise to zero mean and unit variance."""
         if mean is not None and std is not None:
             w = image.shape[-1]
@@ -48,7 +48,7 @@ def augmix(img,
                 MEAN = [0.4914, 0.4822, 0.4465]
                 STD = [0.2023, 0.1994, 0.2010]
         else:
-            MEAN, STD = mean, std
+            raise ValueError("Need MEAN & STD for normalization.")
 
         mean, std = np.array(MEAN), np.array(STD)
         image = (image - mean[:, None, None]) / std[:, None, None]
@@ -85,9 +85,7 @@ def augmix(img,
                 op = np.random.choice(augmentations)
                 for j in range(img_aug.shape[0]):
                     img_aug[j] = apply_op(img_aug[j], op, severity)
-            mix += ws[i] * img_aug
-        img = (1 - lam) * img + lam * mix
-            # mix += ws[i] * normalize(img_aug)
-        # img = (1 - lam) * normalize(img) + lam * mix
+            mix += ws[i] * normalize(img_aug, mean=mean, std=std)
+        img = (1 - lam) * normalize(img, mean=mean, std=std) + lam * mix
 
         return torch.from_numpy(img).cuda().float(), lam
