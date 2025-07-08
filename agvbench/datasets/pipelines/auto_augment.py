@@ -261,6 +261,107 @@ class RandAugment(object):
         return repr_str
 
 
+
+@PIPELINES.register_module()
+class TrivialAugment(object):
+    r"""Trivial augmentation.
+
+    This data augmentation is proposed in `TrivialAugment: Tuning-free 
+    Yet State-of-the-Art Data Augmentation
+    <https://arxiv.org/abs/2103.10158>`_.
+
+    Args:
+        policies (list[dict]): The policies of random augmentation. Each
+            policy in ``policies`` is one specific augmentation policy (dict).
+            The policy shall at least have key `type`, indicating the type of
+            augmentation. For those which have magnitude, (given to the fact
+            they are named differently in different augmentation, )
+            `magnitude_key` and `magnitude_range` shall be the magnitude
+            argument (str) and the range of magnitude (tuple in the format of
+            (val1, val2)), respectively. Note that val1 is not necessarily
+            less than val2.
+        num_policies (int): Number of policies to select from policies each
+            time.
+        max_level (int | float): Total level for the magnitude. Defaults to
+            30.
+        hparams (dict): Configs of hyperparameters. Hyperparameters will be
+            used in policies that require these arguments if these arguments
+            are not set in policy dicts. Defaults to use _HPARAMS_DEFAULT.
+    """
+
+    def __init__(self,
+                 policies: Union[str, List[dict]],
+                 max_level: int = 30,
+                 use_numpy: bool = False,
+                 hparams: dict = _HPARAMS_DEFAULT):
+        if isinstance(policies, str):
+            assert policies in RANDAUG_POLICIES, 'Invalid policies, ' \
+                f'please choose from {list(RANDAUG_POLICIES.keys())}.'
+            policies = RANDAUG_POLICIES[policies]
+        assert isinstance(policies, list) and len(policies) > 0, \
+            'Policies must be a non-empty list.'
+        assert isinstance(max_level, (int, float)),  'Total level must be ' \
+            f'of int or float type, got {type(max_level)} instead.'
+        assert max_level > 0, 'total_level must be greater than 0.'
+
+        self.max_level = max_level
+        self.hparams = hparams
+        self.use_numpy = use_numpy
+        policies = copy.deepcopy(policies)
+        self._check_policies(policies)
+        self.policies = [merge_hparams(policy, hparams) for policy in policies]
+
+    def _check_policies(self, policies):
+        for policy in policies:
+            assert isinstance(policy, dict) and 'type' in policy, \
+                'Each policy must be a dict with key "type".'
+            type_name = policy['type']
+
+            magnitude_key = policy.get('magnitude_key', None)
+            if magnitude_key is not None:
+                assert 'magnitude_range' in policy, \
+                    f'TrivialAugment policy {type_name} needs `magnitude_range`.'
+                magnitude_range = policy['magnitude_range']
+                assert (isinstance(magnitude_range, Sequence)
+                        and len(magnitude_range) == 2), \
+                    f'`magnitude_range` of TrivialAugment policy {type_name} ' \
+                    f'should be a Sequence with two numbers.'
+
+    def _process_policies(self, policies):
+        processed_policies = []
+        for policy in policies:
+            processed_policy = copy.deepcopy(policy)
+            magnitude_key = processed_policy.pop('magnitude_key', None)
+            if magnitude_key is not None:
+                magnitude = random.randint(0, self.max_level)
+                val1, val2 = processed_policy.pop('magnitude_range')
+                magnitude = (magnitude / self.max_level) * (val2 -
+                                                              val1) + val1
+                processed_policy.update({magnitude_key: magnitude})
+            processed_policies.append(processed_policy)
+        return processed_policies
+
+    def __call__(self, img):
+        if self.num_policies == 0:
+            return img
+        sub_policy = random.choices(self.policies, k=1)
+        sub_policy = self._process_policies(sub_policy)
+        sub_policy = BuildCompose(sub_policy)
+        if self.use_numpy:
+            img = sub_policy(img)
+            return img
+        else:
+            img = sub_policy(np.array(img))
+            return Image.fromarray(img.astype(np.uint8))
+
+    def __repr__(self):
+        repr_str = self.__class__.__name__
+        repr_str += f'(policies={self.policies}, '
+        repr_str += f'max_level={self.max_level})'
+        return repr_str
+
+
+
 @PIPELINES.register_module()
 class RandAugment_timm(object):
     """RandAugment data augmentation method based on

@@ -172,6 +172,7 @@ Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), 
 }
 ```
 
+___
 
 | 模块 | 建议 |
 | --- | ---- |
@@ -179,6 +180,18 @@ Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), 
 | **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
 | **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
 | **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充； |
+
+
+### Label Enhancement Methods
+| 维度          |  FCM  |  LP  | Manifold |     LS     |
+| ------------- | ---- | ---- | --------- | ---------- |
+| 是否依赖标签   | ❌   | ✅  | 可选       | ✅        |
+| 是否依赖邻接图 | ❌   | ✅  | ✅        | ❌        |
+| 是否全局一致性 | ✅   | ✅  | ❌（局部） | ✅        |
+| 是否适合半监督 | ✅   | ✅  | ✅        | ⛔（需GT） |
+
+___
+
 
 ## Questions
 
