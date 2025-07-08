@@ -249,20 +249,20 @@ def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='vera2
 
     eps = 8
     if dataset == 'vera220':
-        mean=[0.4399, 0.4399, 0.4399], std=[0.114, 0.114, 0.114]
+        mean=[0.4399, 0.4399, 0.4399]
+        std=[0.114, 0.114, 0.114]
     elif dataset == 'tju600':
-        mean=[0.382, 0.382, 0.382], std=[0.088, 0.088, 0.088]
+        mean=[0.382, 0.382, 0.382]
+        std=[0.088, 0.088, 0.088]
     elif dataset == 'hkpu500':
-        mean=[0.556, 0.556, 0.556], std=[0.047, 0.047, 0.047]
+        mean=[0.556, 0.556, 0.556]
+        std=[0.047, 0.047, 0.047]
     elif dataset == 'casia200':
-        mean=[0.471, 0.471, 0.471], std=[0.067, 0.067, 0.067]
-    else:
-<<<<<<< HEAD
-        raise ValueError("Please choose a correct dataset for evluation.")
-=======
-        mean, std =[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+        mean=[0.471, 0.471, 0.471]
+        std=[0.067, 0.067, 0.067]
+    else: 
+        raise ValueError("please chose a valid dataset")
     mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
->>>>>>> eb2dfaf8e8ee66094d8f0786bbea870a8fc94d72
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
@@ -300,20 +300,20 @@ def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera22
     alpha = 2
     steps = 10
     if dataset == 'vera220':
-        mean=[0.4399, 0.4399, 0.4399], std=[0.114, 0.114, 0.114]
+        mean=[0.4399, 0.4399, 0.4399]
+        std=[0.114, 0.114, 0.114]
     elif dataset == 'tju600':
-        mean=[0.382, 0.382, 0.382], std=[0.088, 0.088, 0.088]
+        mean=[0.382, 0.382, 0.382]
+        std=[0.088, 0.088, 0.088]
     elif dataset == 'hkpu500':
-        mean=[0.556, 0.556, 0.556], std=[0.047, 0.047, 0.047]
+        mean=[0.556, 0.556, 0.556]
+        std=[0.047, 0.047, 0.047]
     elif dataset == 'casia200':
-        mean=[0.471, 0.471, 0.471], std=[0.067, 0.067, 0.067]
-    else:
-<<<<<<< HEAD
-        raise ValueError("Please choose a correct dataset for evluation.")
-=======
-        mean, std =[0.485, 0.456, 0.406], [0.229, 0.224, 0.225]
+        mean=[0.471, 0.471, 0.471]
+        std=[0.067, 0.067, 0.067]
+    else: 
+        raise ValueError("please chose a valid dataset")
     mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
->>>>>>> eb2dfaf8e8ee66094d8f0786bbea870a8fc94d72
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
