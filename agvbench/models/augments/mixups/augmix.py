@@ -12,6 +12,8 @@ def augmix(img,
            mixture_depth=-1,
            mixture_width=3,
            severity=1,
+           mean=None,
+           std=None,
            dist_mode=False,
            **kwargs):
     r""" AugMix augmentation.
@@ -35,15 +37,18 @@ def augmix(img,
 
     def normalize(image):
         """Normalize input image channel-wise to zero mean and unit variance."""
-        w = image.shape[-1]
-        if w > 32:
-            # ImageNet-1K or Tiny-ImageNet
-            MEAN = [0.485, 0.456, 0.406]
-            STD = [0.229, 0.224, 0.225]
+        if mean is not None and std is not None:
+            w = image.shape[-1]
+            if w > 32:
+                # ImageNet-1K or Tiny-ImageNet
+                MEAN = [0.485, 0.456, 0.406]
+                STD = [0.229, 0.224, 0.225]
+            else:
+                # CIFAR-100
+                MEAN = [0.4914, 0.4822, 0.4465]
+                STD = [0.2023, 0.1994, 0.2010]
         else:
-            # CIFAR-100
-            MEAN = [0.4914, 0.4822, 0.4465]
-            STD = [0.2023, 0.1994, 0.2010]
+            MEAN, STD = mean, std
 
         mean, std = np.array(MEAN), np.array(STD)
         image = (image - mean[:, None, None]) / std[:, None, None]
