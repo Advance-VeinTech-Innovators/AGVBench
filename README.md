@@ -61,9 +61,9 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
        8. [x] StarMix
     2. Dynamic
        1. [x] SaliencyMix
-       2. [ ] PuzzleMix
-       3. [ ] GudiedMix
-       4. [ ] AutoMix
+       2. [x] PuzzleMix
+       3. [x] GudiedMix
+       4. [x] AutoMix
   - Generating (*This depends on the difficulty of coding, and if it is difficult to implement, we can choose not to include it.*)
     1. [ ] GANs
     2. [ ] Diffusion Model
@@ -139,6 +139,15 @@ Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), 
   author={Jin, Xin and Zhu, Hongyu and Yacoubi, Moun{\^\i}m A El and Li, Haiyang and Liao, Hongchao and Qin, Huafeng and Jiang, Yun},
   journal={arXiv preprint arXiv:2405.12721},
   year={2024}
+}
+
+@inproceedings{jin2025starmixup,
+  title={StarMixup: A More Suitable Mixup Method for Palm-Vein Identification},
+  author={Jin, Xin and Zhu, Hongyu and Fong, Simon and Marques, Jo{\~a}o Alexandre Lobo and Qin, Huafeng and Jiang, Yun},
+  booktitle={2025 7th International Symposium on Computational and Business Intelligence (ISCBI)},
+  pages={83--87},
+  year={2025},
+  organization={IEEE}
 }
 ```
 
