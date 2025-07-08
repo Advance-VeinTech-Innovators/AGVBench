@@ -4,12 +4,11 @@ import numpy as np
 
 @torch.no_grad()
 def softaugment(img,
-                gt_label,
                 t_crop=1.0,
                 max_p_crop=1.0,
-                pow_crop=4.0,
-                bg_crop=1.0,
-                sigma_crop=10,
+                pow_crop=2.0,
+                bg_crop=1,
+                sigma_crop=12,
                 iou=False,
                 n_classes=220
             ):
@@ -22,7 +21,6 @@ def softaugment(img,
     Args:
         img (Tensor): Input images of shape (N, C, H, W).
             Typically these should be mean centered and std scaled.
-        gt_label (Tensor): Ground-truth labels (one-hot).
         t_crop (float): Threshold for overlap ratio to label confidence.
         max_p_crop (float): Maximum probability for the label confidence.
         pow_crop (float): Power for the label confidence mapping.
@@ -80,13 +78,12 @@ def softaugment(img,
     else:
         overlap = intersect / (H * W)
 
+    # We modify the prob of label as lam in our codebase for computing the loss easily
     prob = compute_prob(overlap,
                         T=t_crop,
                         max_prob=max_p_crop,
                         pow=pow_crop,
                         n_classes=n_classes)
-    
-    gt_label = gt_label + 1 - prob  # shape: (N,)
 
-    return img, gt_label
+    return img, prob
 

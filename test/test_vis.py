@@ -1,7 +1,9 @@
 from agvbench.models.augments.basic import (randomblur, cutout, gridmask, spnoise, ricap, yoco)
+from agvbench.models.augments.basic.softaugment import softaugment
 from agvbench.models.augments.mixups import augmix
 from torchvision import transforms
 from PIL import Image
+import torch
 
 
 def main():
@@ -23,12 +25,14 @@ def main():
     # img = ricap(img)
     # img = yoco(img)
     # img, _ = augmix(img)
-    # save_image = transforms.ToPILImage()
-    # img = save_image(img.squeeze(0))
-    # img = img.convert("RGB")
-    # # Save the processed image
-    # img.save('augmix.png')
-    # raise ValueError("debugging")
+    img, lam = softaugment(img)
+    print(lam)
+    save_image = transforms.ToPILImage()
+    img = save_image(img.squeeze(0))
+    img = img.convert("RGB")
+    # Save the processed image
+    img.save('softaug.png')
+    raise ValueError("debugging")
 
 
 if __name__=="__main__":
