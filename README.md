@@ -54,8 +54,8 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
     1. Disruption-based
        1. [x] Flip
        2. [x] Rotate
-       3. [ ] Blur
-       4. [ ] Noisy
+       3. [x] Blur
+       4. [x] Noisy
        5. [x] Translation, 
     2. Policy-based: 
        1. [x] AutoAugment
@@ -63,7 +63,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
        3. [ ] TeachAugment
        4. [ ] KeepAugment
        5. [ ] SoftAugment
-       6. [ ] TrivialAugment
+       6. [x] TrivialAugment
     3. Cutting-based
        1. [x] YOCO
        2. [x] Cutout
