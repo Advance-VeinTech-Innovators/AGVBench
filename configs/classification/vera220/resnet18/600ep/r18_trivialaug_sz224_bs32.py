@@ -1,5 +1,5 @@
 _base_ = [
-    '../../../_base_/vera220/sz224_bs32_autoaug.py',
+    '../../../_base_/vera220/sz224_bs32_trivialaug.py',
     '../../../_base_/default_runtime.py',
 ]
 

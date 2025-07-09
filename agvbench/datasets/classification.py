@@ -5,7 +5,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import sklearn.metrics as metric
 from sklearn.metrics import roc_curve
+import os.path as osp
 
+import mmcv
 from agvbench.models.utils import precision_recall_f1, support
 from agvbench.utils import print_log
 
@@ -173,7 +175,7 @@ class ClassificationDataset(BaseDataset):
         return results
 
 
-    def eer(self, score, num_class=600, name=None):
+    def eer(self, score, num_class=600, name=None, work_dir=None):
         score = torch.tensor(score).cuda().cpu()
         score = score.softmax(dim=1)
         labels = torch.LongTensor(self.data_source.labels)
@@ -190,8 +192,13 @@ class ClassificationDataset(BaseDataset):
         eer_1 = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
         eer_2 = fnr[np.nanargmin(np.absolute((fnr - fpr)))]
         eer = (eer_1 + eer_2) / 2
-
-        np.save("fpr_{}.npy".format(name),fpr)
-        np.save("tpr_{}.npy".format(name), tpr)
-
+        if work_dir is None:
+            np.save("fpr_{}.npy".format(name),fpr)
+            np.save("tpr_{}.npy".format(name), tpr)
+        else:
+            mmcv.mkdir_or_exist(osp.abspath(work_dir))
+            fpr_path = work_dir + f"/fpr_{name}.npy"
+            tpr_path = work_dir + f"/tpr_{name}.npy"
+            np.save(fpr_path,fpr)
+            np.save(tpr_path, tpr)
         return eer

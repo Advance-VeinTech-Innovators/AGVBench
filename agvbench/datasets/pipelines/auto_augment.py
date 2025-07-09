@@ -342,8 +342,6 @@ class TrivialAugment(object):
         return processed_policies
 
     def __call__(self, img):
-        if self.num_policies == 0:
-            return img
         sub_policy = random.choices(self.policies, k=1)
         sub_policy = self._process_policies(sub_policy)
         sub_policy = BuildCompose(sub_policy)

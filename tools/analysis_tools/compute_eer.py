@@ -138,10 +138,13 @@ def main():
 
     # create work_dir
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
+    parts = args.checkpoint.split('/')
+    sub_dir = f"{parts[-4]}/{parts[-3]}/{parts[-2]}"
+    npy_dir = osp.join(args.work_dir, sub_dir)
 
     # logger
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    log_file = osp.join(cfg.work_dir, 'test_{}.log'.format(timestamp))
+    log_file = osp.join(cfg.work_dir, f'eer_{parts[-3]}_{parts[-2]}.log')
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
 
     # build the dataloader
@@ -162,7 +165,7 @@ def main():
         if args.keys == 'eer':
             print_log("It`s EER for Biometric Idantification", logger=logger)
             outputs = single_gpu_test(model, data_loader)
-            result = dataset.eer(outputs[args.head], num_class=args.num_class, name=args.name)
+            result = dataset.eer(outputs[args.head], num_class=args.num_class, name=args.name, work_dir=npy_dir)
             print_log("result: {}%".format(result * 100), logger=logger)
         else:
             print_log('False.', logger=logger)
