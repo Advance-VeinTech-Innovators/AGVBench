@@ -13,9 +13,9 @@ import mmcv
 from mmcv import DictAction
 from mmcv.parallel import MMDataParallel
 from mmcv.runner import get_dist_info, init_dist, load_checkpoint
-from openmixup.datasets import build_dataloader, build_dataset
-from openmixup.models import build_model
-from openmixup.utils import (get_root_logger, dist_forward_collect, print_log,
+from agvbench.datasets import build_dataloader, build_dataset
+from agvbench.models import build_model
+from agvbench.utils import (get_root_logger, dist_forward_collect, print_log,
                              setup_multi_processes, nondist_forward_collect, traverse_replace,)
 
 
