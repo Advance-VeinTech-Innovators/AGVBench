@@ -27,7 +27,7 @@ model = dict(
     head=dict(
         type='ClsMixupHead',
         loss=dict(type='CrossEntropyLoss', loss_weight=1.0),
-        with_avg_pool=True, in_channels=512, num_classes=220)
+        with_avg_pool=True, in_channels=1280, num_classes=220)
 )
 
 
