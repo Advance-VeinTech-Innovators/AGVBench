@@ -35,8 +35,8 @@ train_pipeline = [
     dict(type='RandomResizedCrop', size=224, interpolation=3),  # bicubic
     dict(type='RandAugment',
         policies=rand_increasing_policies,
-        num_policies=1, total_level=10,
-        magnitude_level=9, magnitude_std=0.5,  # 'rand-m7-mstd0.5'
+        num_policies=2, total_level=10,
+        magnitude_level=7, magnitude_std=0.5,  # 'rand-m7-mstd0.5'
         hparams=dict(
             pad_val=[104, 116, 124], interpolation='bicubic')),
 ]

@@ -1,5 +1,5 @@
 _base_ = [
-    '../../../_base_/vera220/sz224_bs32_autoaug.py',
+    '../../../_base_/vera220/sz224_bs32_vanilla.py',
     '../../../_base_/default_runtime.py',
 ]
 
@@ -7,7 +7,7 @@ _base_ = [
 model = dict(
     type='BasicAugClassification',
     pretrained=None,
-    aug_mode="vanilla",
+    aug_mode="cutout",
     aug_args=dict(
         cutout=dict(),
         gridmask=dict(n_holes=(2, 6), hole_aspect_ratio=1.,
@@ -21,11 +21,10 @@ model = dict(
         vanilla=dict(),
     ),
     backbone=dict(
-        type='ResNet',
-        depth=18,
-        num_stages=4,
-        out_indices=(3,),
-        style='pytorch'),
+        type='MobileNetV2',
+        widen_factor=1.,
+        out_indices=(7,),
+        ),
     head=dict(
         type='ClsHead',  # default CE
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),

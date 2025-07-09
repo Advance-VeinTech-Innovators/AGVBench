@@ -1,5 +1,5 @@
 _base_ = [
-    '../../../_base_/vera220/sz224_bs32_autoaug.py',
+    '../../../_base_/vera220/sz224_bs32_flip.py',
     '../../../_base_/default_runtime.py',
 ]
 
@@ -21,11 +21,10 @@ model = dict(
         vanilla=dict(),
     ),
     backbone=dict(
-        type='ResNet',
-        depth=18,
-        num_stages=4,
-        out_indices=(3,),
-        style='pytorch'),
+        type='MobileNetV2',
+        widen_factor=1.,
+        out_indices=(7,),
+        ),
     head=dict(
         type='ClsHead',  # default CE
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
@@ -44,4 +43,4 @@ optimizer_config = dict(grad_clip=None)
 lr_config = dict(policy='CosineAnnealing', min_lr=0.)
 
 # runtime settings
-runner = dict(type='EpochBasedRunner', max_epochs=600)
+runner = dict(type='EpochBasedRunner', max_epochs=300)

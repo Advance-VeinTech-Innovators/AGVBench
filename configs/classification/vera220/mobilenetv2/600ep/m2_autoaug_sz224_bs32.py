@@ -21,11 +21,10 @@ model = dict(
         vanilla=dict(),
     ),
     backbone=dict(
-        type='ResNet',
-        depth=18,
-        num_stages=4,
-        out_indices=(3,),
-        style='pytorch'),
+        type='MobileNetV2',
+        widen_factor=1.,
+        out_indices=(7,),
+        ),
     head=dict(
         type='ClsHead',  # default CE
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
