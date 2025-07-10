@@ -17,6 +17,29 @@ from ..utils import PlotTensor
 
 @MODELS.register_module
 class TeachAugment(BaseModel):
+    r""" TeachAugmentation.
+
+    "TeachAugment: Data Augmentation Optimization Using Teacher Knowledge. 
+    (https://arxiv.org/abs/2202.12513)". In CVPR, 2022.
+        https://github.com/DensoITLab/TeachAugment
+    
+    Args:
+        backbone (dict): Config dict for module of backbone ConvNet (main).
+        backbone_k (dict): Config dict for module of momentum backbone ConvNet. Default: None.
+        aug_module (dict): Config dict for the augmentation sub-network. Default: None.
+        head_aug (dict): Config dict for module of augmented classification loss (aug_module).
+        head_one (dict): Config dict for module of onehot classification loss (backbone).
+        head_weights (dict): Dict of the used cls heads names and loss weights,
+            which determines the cls or augmented head in used.
+            Default: dict(head_one_q=1, head_aug_k=1)
+        momentum (float): Momentum coefficient for the momentum-updated encoder.
+            Default: 0.999.
+        head_ensemble (bool): Whether to ensemble results of all heads. Default to False.
+        pretrained (str, optional): Path to pre-trained weights. Default: None.
+        pretrained_k (str, optional): Path to pre-trained weights for en_k. Default: None.
+        save_by_sample (bool): Whether to save mixup samples separately.
+        debug_mode (bool): Whether to save some intermediate products.
+    """
     def __init__(self,
                  backbone,
                  backbone_k=None,

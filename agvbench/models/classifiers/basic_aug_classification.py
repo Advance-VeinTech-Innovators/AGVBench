@@ -10,9 +10,8 @@ from agvbench.utils import print_log
 from .base_model import BaseModel
 from .. import builder
 from ..registry import MODELS
-from ..augments.basic import (cutout, gridmask, ricap, yoco, spnoise, randomblur)
-from ..augments.basic.softaugment import softaugment
-from ..augments.basic.keepaugment import keepaugment
+from ..augments.basic import (cutout, gridmask, ricap, yoco, spnoise, randomblur, randnquant,
+                              keepaugment, softaugment)
 from ..utils import PlotTensor
 
 
@@ -67,6 +66,7 @@ class BasicAugClassification(BaseModel):
         self.aug_mode = aug_mode if isinstance(aug_mode, list) else [str(aug_mode)]
         self.masking_mode = {
             "cutout": cutout, "gridmask": gridmask, "spnoise": spnoise, "randomblur": randomblur,
+            "randnquant": randnquant,
         }
         self.cutting_mode = {
             "ricap": ricap, "yoco": yoco,
@@ -80,6 +80,7 @@ class BasicAugClassification(BaseModel):
                          cut_area_ratio=(0.5, 1), cut_aspect_ratio=(0.5, 2)),
             spnoise=dict(prob=0.1, noise_type='random'),
             randomblur=dict(),
+            randnquant=dict(region_num=4, collapse_to_val='inside_random', spacing='random'),
             ricap=dict(choose_num=2,),
             yoco=dict(),
             softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
@@ -168,13 +169,19 @@ class BasicAugClassification(BaseModel):
         return_mask, mask = False, None  # return sample mask in [N, 1, H, W]
         
         # applying masking sample augmentation methods
-        if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur"]:
-            img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask, **self.aug_args[cur_mode])
+        if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur", "randnquant"]:
+            if cur_mode in ["cutout", "gridmask", "randomblur"]:
+                img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, 
+                                                return_mask=return_mask, **self.aug_args[cur_mode])
+            elif cur_mode in ["spnoise", "randnquant"]:
+                img = self.masking_mode[cur_mode](img, dist_mode=False, 
+                                                return_mask=return_mask, **self.aug_args[cur_mode])
             if return_mask:
                 img, mask = img  # (img, mask): get mask
         elif cur_mode in ["ricap", "yoco"]:
             if cur_mode == 'yoco':
-                img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask, **self.aug_args[cur_mode])
+                img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False, 
+                                                  return_mask=return_mask, **self.aug_args[cur_mode])
             elif cur_mode == 'ricap':
                 img, gt_label = self.cutting_mode[cur_mode](img, gt_label, cur_alpha, dist_mode=False, 
                                                             return_mask=return_mask, **self.aug_args[cur_mode])

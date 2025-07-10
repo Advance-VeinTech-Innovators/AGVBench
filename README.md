@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+- **2025.07.12** We supported some Randomized Quantization augmentation: **"Randomized Quantization"[[ICCV 2023]](https://arxiv.org/abs/2212.08663)**.
 - **2025.07.11** We supported some policy-based augmentation: **"KeepAugment"[[CVPR 2021]](https://arxiv.org/abs/2011.117781)**, **"TrivialAugment"[[ICCV 2021]](https://arxiv.org/abs/2103.10158)**, **"TeachAugment"[[CVPR 2022]](https://arxiv.org/abs/2202.12513)**, **"SoftAugment"[[CVPR 2023]](https://arxiv.org/abs/2211.04625)**.
 - **2025.07.08** Fixed some bugs and supported **PGD Adversarial Attack** in `calibration_fgsm.py`, We add the training config files for training. Now. you can training the models with supported augmentation methods.
 - **2025.06.23** We update some analysis tools code: `compute_eer.py`, `analyze_sparse.py`, `save_purning_model.py`, `tsne_clustering_visualization.py`, and `draw_eer.py` files for your analysis study. Modify the `classification.py` file in `agvbench/datasets/` for computing the eer score.
@@ -70,7 +71,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
        2. [x] Cutout
        3. [x] GridMask
        4. [x] RandomErasing
-       5. [ ] Randomized Quantization
+       5. [x] Randomized Quantization
   - Multi-samples
     1. Static
        1. [x] Mixup
