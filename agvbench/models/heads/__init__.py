@@ -13,6 +13,7 @@ from .pmix_block import PixelMixBlock
 from .reg_head import RegHead
 from .swav_head import MultiPrototypes, SwAVHead
 from .vision_transformer_head import VisionTransformerClsHead, DistillationVisionTransformerClsHead
+from .teachaug_subnet import TeachAugModule, ColorEnhance, AffineTransfer
 
 __all__ = [
     'A2MIMHead', 'AdaptiveMask', 'ClsHead', 'ClsMixupHead', 'ClsUncertainMixupHead',
@@ -24,4 +25,5 @@ __all__ = [
     'SwAVHead', 'SimMIMHead', 'VisionTransformerClsHead', 'DistillationVisionTransformerClsHead',
     'ClsRetNetHead', 'ClsVGGHead', 
     "ClsFVRASHead", "ClsPVHead",
+    "TeachAugModule", "ColorEnhance", "AffineTransfer"
 ]
