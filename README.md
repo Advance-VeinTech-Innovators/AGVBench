@@ -19,8 +19,9 @@
 ____
 
 ### 💥 News
-  - **2025.07.08** Fixed some bugs and supported **PGD Adversarial Attack** in `calibration_fgsm.py`, We add the training config files for training. Now. you can training the models with supported augmentation methods.
- - **2025.06.23** We update some analysis tools code: `compute_eer.py`, `analyze_sparse.py`, `save_purning_model.py`, `tsne_clustering_visualization.py`, and `draw_eer.py` files for your analysis study. Modify the `classification.py` file in `agvbench/datasets/` for computing the eer score.
+- **2025.07.11** We supported some policy-based augmentation: **"KeepAugment"[[CVPR 2021]](https://arxiv.org/abs/2011.117781)**, **"TrivialAugment"[[ICCV 2021]](https://arxiv.org/abs/2103.10158)**, **"TeachAugment"[[CVPR 2022]](https://arxiv.org/abs/2202.12513)**, **"SoftAugment"[[CVPR 2023]](https://arxiv.org/abs/2211.04625)**.
+- **2025.07.08** Fixed some bugs and supported **PGD Adversarial Attack** in `calibration_fgsm.py`, We add the training config files for training. Now. you can training the models with supported augmentation methods.
+- **2025.06.23** We update some analysis tools code: `compute_eer.py`, `analyze_sparse.py`, `save_purning_model.py`, `tsne_clustering_visualization.py`, and `draw_eer.py` files for your analysis study. Modify the `classification.py` file in `agvbench/datasets/` for computing the eer score.
 - **2025.06.22** we support two mix augmentation method **"AugMix"[[ICLR 2020]](https://arxiv.org/abs/1912.02781)** and **"StarMixup"[[ICSBI 2025]](https://ieeexplore.ieee.org/abstract/document/11015373/)**. 
 - **2025.06.21** We relase the core codebase files.  
 
@@ -60,9 +61,9 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
     2. Policy-based: 
        1. [x] AutoAugment
        2. [x] RandAugment
-       3. [ ] TeachAugment
-       4. [ ] KeepAugment
-       5. [ ] SoftAugment
+       3. [x] TeachAugment
+       4. [x] KeepAugment
+       5. [x] SoftAugment
        6. [x] TrivialAugment
     3. Cutting-based
        1. [x] YOCO
