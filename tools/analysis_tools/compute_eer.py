@@ -48,7 +48,7 @@ def parse_args():
     parser.add_argument(
         '--head',
         type=str,
-        default=None, # choose head : head0 or acc_mix
+        default="head0", # choose head : head0 or acc_mix
         help='choose head, [acc_mix_k, acc_one_k, acc_mix_q, acc_one_q] for automix, '
              'samix and adautomix and [head0] for mixups')
     parser.add_argument(

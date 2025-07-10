@@ -7,9 +7,9 @@ from torchvision.transforms import RandAugment
 @torch.no_grad()
 def keepaugment(img,
                 gt_label,
-                model,
+                pre_dic,
                 threshold=0.5,
-                mode='cut',
+                mode='paste',
                 lam=None,
                 randaugment_n=2,
                 randaugment_m=9
@@ -31,6 +31,15 @@ def keepaugment(img,
     Returns:
         img (Tensor): Augmented images.
     """
+
+    def fast_augment(images, aug, device):
+        if all(isinstance(t, torch.nn.Module) for t in aug.transforms):
+            return aug(images.to(device))
+        pil_images = [T.ToPILImage()(img.cpu()) for img in images]
+        augmented_pil = [aug(img).convert("RGB") for img in pil_images]
+        augmented_tensors = [ T.ToTensor()(img).to(device) for img in augmented_pil ]
+
+        return torch.stack(augmented_tensors)
 
     N, C, H, W = img.shape
     aug = RandAugment(num_ops=randaugment_n, magnitude=randaugment_m)
@@ -54,8 +63,7 @@ def keepaugment(img,
     region_mask = region_mask.expand(N, 1, H, W)
 
     # Step 2: forward to get average confidence
-    logits = model(img)  # (N, C)
-    probs = F.softmax(logits, dim=-1)
+    probs = F.softmax(pre_dic, dim=-1)
     conf = probs[torch.arange(N), gt_label.argmax(dim=-1)]  # (N,)
     avg_conf = conf.mean()
 
@@ -65,12 +73,10 @@ def keepaugment(img,
         if avg_conf < threshold:
             x_aug = x_aug * (1 - region_mask)
     elif mode == 'paste':
-        x_prime = img.clone()
-        if aug is not None:
-            # apply randaugment
-            x_prime_list = [aug(T.ToPILImage()(img.cpu())).convert("RGB") for img in x_prime]
-            x_prime = torch.stack([T.ToTensor()(img).cuda() for img in x_prime])
-        if avg_conf > threshold:
+        if aug is not None and avg_conf > threshold:
+            x_prime = fast_augment(img, aug, img.device)
             img = img_ * region_mask + x_prime * (1 - region_mask)
+        elif avg_conf > threshold:
+            img = img_ * region_mask + img * (1 - region_mask)
 
     return img

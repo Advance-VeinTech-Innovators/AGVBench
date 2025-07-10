@@ -12,6 +12,7 @@ from .. import builder
 from ..registry import MODELS
 from ..augments.basic import (cutout, gridmask, ricap, yoco, spnoise, randomblur)
 from ..augments.basic.softaugment import softaugment
+from ..augments.basic.keepaugment import keepaugment
 from ..utils import PlotTensor
 
 
@@ -71,7 +72,7 @@ class BasicAugClassification(BaseModel):
             "ricap": ricap, "yoco": yoco,
         }
         self.policy_mode = {
-            "softaugment": softaugment,
+            "softaugment": softaugment, "keepaugment": keepaugment,
         }
         self.aug_args = dict(  # default settings
             cutout=dict(),
@@ -83,6 +84,7 @@ class BasicAugClassification(BaseModel):
             yoco=dict(),
             softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
                         iou=False, n_classes=220),
+            keepaugment=dict(threshold=0.5, mode='paste', randaugment_n=2, randaugment_m=9),
             vanilla=dict(),
         )
         _supported_mode = ["vanilla"] + list(self.masking_mode.keys()) + list(self.cutting_mode.keys()) + list(self.policy_mode.keys())
@@ -167,17 +169,21 @@ class BasicAugClassification(BaseModel):
         
         # applying masking sample augmentation methods
         if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur"]:
-            img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask)
+            img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask, **self.aug_args[cur_mode])
             if return_mask:
                 img, mask = img  # (img, mask): get mask
         elif cur_mode in ["ricap", "yoco"]:
             if cur_mode == 'yoco':
-                img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask)
+                img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False, return_mask=return_mask, **self.aug_args[cur_mode])
             elif cur_mode == 'ricap':
-                img, gt_label = self.cutting_mode[cur_mode](img, gt_label, cur_alpha, dist_mode=False, return_mask=return_mask)
+                img, gt_label = self.cutting_mode[cur_mode](img, gt_label, cur_alpha, dist_mode=False, 
+                                                            return_mask=return_mask, **self.aug_args[cur_mode])
         elif cur_mode in ["softaugment", "keepaugment"]:
             if cur_mode == 'softaugment':
-                img = self.policy_mode[cur_mode](img)
+                img = self.policy_mode[cur_mode](img, **self.aug_args[cur_mode])
+            elif cur_mode == 'keepaugment':
+                pred_raw = self.backbone(img)[0].clone().detach()
+                img = self.policy_mode[cur_mode](img, gt_label, pred_raw, **self.aug_args[cur_mode])
         else:
             assert cur_mode == "vanilla"
         x = self.backbone(img)
