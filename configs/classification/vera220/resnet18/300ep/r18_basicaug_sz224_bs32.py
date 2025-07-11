@@ -14,6 +14,7 @@ model = dict(
                     cut_area_ratio=(0.5, 1), cut_aspect_ratio=(0.5, 2)),
         spnoise=dict(prob=0.1, noise_type='random'),
         randomblur=dict(),
+        randnquant=dict(region_num=4, collapse_to_val='inside_random', spacing='random'),
         ricap=dict(choose_num=2,),
         yoco=dict(),
         softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
