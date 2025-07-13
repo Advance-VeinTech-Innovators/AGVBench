@@ -38,13 +38,12 @@ class AMPVBlock(BaseModule):
                  out_channels,
                  **kwargs):
         super(AMPVBlock, self).__init__()
-        self.conv = InvertedResidual(in_channels=in_channels, out_channels=out_channels, expand_ratio=4),
-        self.avgpool = nn.AvgPool2d(kernel_size=3, stride=2, padding=1),
+        self.conv = InvertedResidual(in_channels=in_channels, out_channels=out_channels, expand_ratio=4)
+        self.avgpool = nn.AvgPool2d(kernel_size=3, stride=2, padding=1)
 
     def forward(self, x):
         x = self.conv(x)
         x = self.avgpool(x)
-
         return x
 
 

@@ -168,7 +168,7 @@ def main():
             result, fpr, list = dataset.eer(outputs[args.head], num_class=args.num_class, name=args.name, work_dir=npy_dir)
             print_log("EER Result: {}%".format(result * 100), logger=logger)
             for i in range(len(list)):
-                print_log("FPR@TPR={}: {}%".format(list[i], fpr[i]), logger=logger)
+                print_log("FPR@TPR={}: {}%".format(list[i], 1 - fpr[i]), logger=logger)
         else:
             print_log('False.', logger=logger)
 
