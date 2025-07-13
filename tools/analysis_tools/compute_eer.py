@@ -165,8 +165,10 @@ def main():
         if args.keys == 'eer':
             print_log("It`s EER for Biometric Idantification", logger=logger)
             outputs = single_gpu_test(model, data_loader)
-            result = dataset.eer(outputs[args.head], num_class=args.num_class, name=args.name, work_dir=npy_dir)
-            print_log("result: {}%".format(result * 100), logger=logger)
+            result, fpr, list = dataset.eer(outputs[args.head], num_class=args.num_class, name=args.name, work_dir=npy_dir)
+            print_log("EER Result: {}%".format(result * 100), logger=logger)
+            for i in range(len(list)):
+                print_log("FPR@TPR={}: {}%".format(list[i], fpr[i]), logger=logger)
         else:
             print_log('False.', logger=logger)
 

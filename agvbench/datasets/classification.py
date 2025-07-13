@@ -192,6 +192,15 @@ class ClassificationDataset(BaseDataset):
         eer_1 = fpr[np.nanargmin(np.absolute((fnr - fpr)))]
         eer_2 = fnr[np.nanargmin(np.absolute((fnr - fpr)))]
         eer = (eer_1 + eer_2) / 2
+
+        # TPR@FPR Metric
+        far_list = [0.1, 0.01, 0.001, 0.0001]
+        metric = []
+        for scale in far_list:
+            far_index = np.where(fpr <= scale)[0][-1]
+            frr = 1 - tpr[far_index]
+            metric.append(frr)
+
         if work_dir is None:
             np.save("fpr_{}.npy".format(name),fpr)
             np.save("tpr_{}.npy".format(name), tpr)
@@ -201,4 +210,4 @@ class ClassificationDataset(BaseDataset):
             tpr_path = work_dir + f"/tpr_{name}.npy"
             np.save(fpr_path,fpr)
             np.save(tpr_path, tpr)
-        return eer
+        return eer, metric, far_list

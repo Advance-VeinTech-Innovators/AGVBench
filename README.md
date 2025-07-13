@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+- **2025.07.13** We supported compute FPR@TPR for biometric task, and supported **"AMPVNet"[[IEEE TIFS 2024]](https://ieeexplore.ieee.org/document/10474047)**.
 - **2025.07.12** We supported some Randomized Quantization augmentation: **"Randomized Quantization"[[ICCV 2023]](https://arxiv.org/abs/2212.08663)**.
 - **2025.07.11** We supported some policy-based augmentation: **"KeepAugment"[[CVPR 2021]](https://arxiv.org/abs/2011.117781)**, **"TrivialAugment"[[ICCV 2021]](https://arxiv.org/abs/2103.10158)**, **"TeachAugment"[[CVPR 2022]](https://arxiv.org/abs/2202.12513)**, **"SoftAugment"[[CVPR 2023]](https://arxiv.org/abs/2211.04625)**.
 - **2025.07.08** Fixed some bugs and supported **PGD Adversarial Attack** in `calibration_fgsm.py`, We add the training config files for training. Now. you can training the models with supported augmentation methods.
@@ -120,7 +121,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
     - [x] ResNet18/ResNet50: Classic backbone
     - [x] MobileNet v2: Effeicent backbone for mobile devices
     - [x] StarLKNet: Large kernel backbone
-    - [x] FVCNN/PCVNN/FVRASNet: Specific design backbone for vein
+    - [x] FVRASNet/AMPVNet: Specific design backbone for vein
   - ViTs
     - [x] DeiT (tiny, small, base)
     - [x] ViT (small, base, large)
@@ -137,7 +138,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 - **Experiments**
   - [x] 📉 Classification
   - [x] 🎯 EER
-  - [ ] 💥 Corruption (image perturbations) 
+  - [ ] 💥 Corruption (image perturbations)
   - [x] ⚔️ Adversarial Attack: FGSM, PGD
   - [ ] 📊 Quality Assessment: PSNR (Peak Signal-to-Noise Ratio) / SSIM (Structural Similarity Index)
 
@@ -146,7 +147,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   - [x] ✂️ Occlusion (cutting-based & masking-based)
   - [x] 🎯 Calibration
   - [x] 🛡️ ROC Curves
-  - [ ] ⏱️ Time-Cost
+  - [ ] ⏱️ Time-Cost (1. Single-img, 2. Total Dataset img for one epoch, 3. Few epochs's mean.)
   - [x] 🧬 t-SNE Visualization
   - [x] 🔍 CAM Visualization
 
@@ -181,7 +182,8 @@ ___
 | **Label-level 增强模块** | 可以考虑明确每种标签增强的输入需求。例如 FCM/LP/Manifold 依赖 feature embedding，建议加一句：`requires extracted features from pretrained encoder.` |
 | **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
 | **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
-| **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充； |
+| **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充；
+|
 
 
 ### Label Enhancement Methods
