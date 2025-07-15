@@ -7,7 +7,9 @@ from .adautomix import AdAutoMix
 from .teachaugment import TeachAugment
 from .mergemix import MergeMix
 
+from .madaugment import MAdAugmentation
+
 __all__ = [
     'BaseModel', 'Classification', 'MixUpClassification', 'BasicAugClassification',
-    'AutoMixup', 'AdAutoMix', 'TeachAugment', 'MergeMix'
+    'AutoMixup', 'AdAutoMix', 'TeachAugment', 'MergeMix', 'MAdAugmentation'
 ]
