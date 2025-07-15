@@ -198,7 +198,7 @@ class MAdAugmentation(BaseModel):
             losses['acc_one_q'] = loss_one_q['acc']
         # adversial training
         if loss_aug_k['loss'] is not None:
-                loss_aug_k['loss'] = (-1.0) * loss_aug_k['loss'] + self.beta * loss_cos_k['loss']
+                loss_aug_k['loss'] = (-1.0) * loss_aug_k['loss'] + self.beta * loss_cos_k
                 self.iter = 0
         # augmentation loss
         if loss_aug_k['loss'] is not None and self.weight_aug_k > 0:

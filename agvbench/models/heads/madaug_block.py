@@ -12,6 +12,8 @@ from agvbench.models.utils.augmentation import (autocontrast, equalize, posteriz
                                                 contrast, brightness, sharpness)
 from PIL import Image
 
+from torchvision.utils import save_image
+
 @HEADS.register_module
 class MAdAugBlock(BaseModule):
     def __init__(self,
@@ -53,70 +55,100 @@ class MAdAugBlock(BaseModule):
 class NeuralAugmenter(BaseModule):
     def __init__(self,
                  in_channels=3,
-                 noise_std=0.1,
+                 noise_std=0.001,
+                 alpha=0.9,
                  num_classes=220,
                  init_cfg=None,
                  **kwargs):
         super(NeuralAugmenter, self).__init__(init_cfg)
+        self.noise_std = noise_std
+        self.alpha = alpha
         self.conv = nn.Conv2d(in_channels, 64, kernel_size=1)
         self.label_embed = nn.Embedding(num_classes, 64) 
-        self.noise_fc = nn.Linear(128, 64) 
+        self.scale = nn.Conv2d(2, 6, kernel_size=1)
+        # self.body = nn.Sequential(
+        #     nn.Conv2d(64, 128, kernel_size=1),
+        #     nn.Conv2d(128, 256, kernel_size=1),
+        #     nn.Conv2d(256, 256, kernel_size=1),
+        #     nn.Conv2d(256, 2, kernel_size=1),
+        # )
+        # self.noise = nn.Sequential(
+        #     nn.Conv2d(num_classes + 64, 896, kernel_size=1),
+        #     nn.Conv2d(896, 1024, kernel_size=1),
+        #     nn.Conv2d(1024, 1024, kernel_size=1),
+        # )
+        # self.neck1 = nn.Conv2d(1024, 2, kernel_size=1)
+        # self.neck2 = nn.Conv2d(1024, 6, kernel_size=1)
         self.body = nn.Sequential(
-            nn.Conv2d(64, 32, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.Conv2d(32, in_channels, kernel_size=1)
+            nn.Conv2d(64, 32, kernel_size=1),
+            nn.Conv2d(32, 16, kernel_size=1),
+            nn.Conv2d(16, 16, kernel_size=1),
+            nn.Conv2d(16, 2, kernel_size=1),
         )
-        self.noise_std = noise_std
+        self.noise = nn.Sequential(
+            nn.Conv2d(in_channels + 64, 128, kernel_size=1),
+            nn.Conv2d(128, 64, kernel_size=1),
+            nn.Conv2d(64, 64, kernel_size=1),
+        )
+        self.neck1 = nn.Conv2d(64, 2, kernel_size=1)
+        self.neck2 = nn.Conv2d(64, 6, kernel_size=1)
+
+        self.output = nn.Conv2d(6, in_channels, kernel_size=1)
+
 
     def forward(self, x, y):
-
-        x = self.conv(x) 
-        label_vec = self.label_embed(y).unsqueeze(-1).unsqueeze(-1)
-        x = x + label_vec
-
+        # image aug
+        x_ = self.conv(x) 
+        label_vec = self.label_embed(y).unsqueeze(-1).unsqueeze(-1).expand_as(x_)
+        x_ = x_ + label_vec
+        x_ = self.body(x_)
+        # noise aug
         noise = torch.randn_like(x) * self.noise_std
-        noise = torch.cat([noise, label_vec.expand_as(x)], dim=1)
-        noise = self.noise_fc(noise.permute(0, 2, 3, 1)).permute(0, 3, 1, 2)
+        noise = torch.cat([noise, label_vec], dim=1)
+        x_n = self.noise(noise)
+        # output aug
+        x_ += self.neck1(x_n)
+        x_ = self.scale(x_) + self.neck2(x_n)
+        x_ = self.output(x_)
 
-        x_aug = x + noise
-        return torch.sigmoid(self.body(x_aug))
+        x = self.alpha * x + (1 - self.alpha) * torch.sigmoid(x_)
+
+        return x
 
 @HEADS.register_module
 class PolicyNetwork(BaseModule):
     def __init__(self, 
-                 backbone,
-                 head,
                  n_subpolicies=10,
                  threshold=0.2,
                  init_cfg=None,
                  **kwargs):
         super(PolicyNetwork, self).__init__(init_cfg)
-        self.p = nn.Parameter(torch.rand(n_subpolicies, 2))  # [subpolicy, operation]
-        self.m = nn.Parameter(torch.rand(n_subpolicies, 2))  # 幅度 \in [0, 1]
+        self.p = nn.Parameter(torch.rand(n_subpolicies, 2))
+        self.m = nn.Parameter(torch.rand(n_subpolicies, 2))
         self.t = threshold
-        self.operations = [
-                        autocontrast, equalize, posterize, rotate, solarize, shear_x, shear_y,
-                        translate_x, translate_y, color, contrast, brightness, sharpness
+        self.operations = [ rotate, solarize, shear_x, shear_y, translate_x, translate_y, color, 
+                           contrast, brightness, sharpness, autocontrast, equalize, posterize,
                     ]
-        self.backbone = backbone
-        self.head = head
 
     def forward(self, x, y, backbone, head, temperature=0.1):
 
         subpolicy_idx = torch.multinomial(self.p.mean(dim=1), 1)
-        p_sub = self.p[subpolicy_idx]
-        m_sub = self.m[subpolicy_idx]
-
+        p_sub = self.p[subpolicy_idx].squeeze(0)
+        m_sub = self.m[subpolicy_idx].squeeze(0)
 
         alpha1 = self._gumbel_softmax(p_sub[0], temperature)
         alpha2 = self._gumbel_softmax(p_sub[1], temperature)
-        
-        x1 = alpha1 * self.apply_augment(x, self.operations[0], m_sub[0]) + (1 - alpha1) * x
-        x2 = alpha2 * self.apply_augment(x1, self.operations[1], m_sub[1]) + (1 - alpha2) * x1
+
+        op1 = np.random.choice(self.operations)
+        op2= np.random.choice(self.operations)
+
+        x1 = (alpha1 * self.apply_augment(x, op1, m_sub[0]) + (1 - alpha1) * x) + 1e-4 * m_sub[0]
+        x2 = (alpha2 * self.apply_augment(x1, op2, m_sub[1]) + (1 - alpha2) * x1) + 1e-4 * m_sub[1]
         
         if np.random.random() > 0.5:
             saliency_map = self._compute_saliency(x, y, backbone, head)
             if saliency_map.sum() > self.t:
+                saliency_map = saliency_map.unsqueeze(1)
                 x = x * saliency_map + x2 * (1 - saliency_map)
         return x2
 
@@ -127,13 +159,19 @@ class PolicyNetwork(BaseModule):
     
     def _compute_saliency(self, x, y, backbone, head):
         x.requires_grad_()
-        scores = backbone(x)
-        scores = head(x[-1])[: y]
-        grad = torch.autograd.grad(scores, x)[0]
-        return grad.abs().sum(dim=1)
+        pred_out = backbone(x)[-1]
+        pred_out = head([pred_out])[0]
+        scores = torch.gather(pred_out, 1, y.unsqueeze(1)).squeeze(1)
+        grad = torch.autograd.grad(scores, x, grad_outputs=torch.ones_like(scores))[0]
+        saliency_map = grad.abs().sum(dim=1)
+        return saliency_map
     
-    def apply_augment(image, op, severity):
-        image = np.clip(image * 255., 0, 255).astype(np.uint8)
-        pil_img = Image.fromarray(image.transpose(1, 2, 0))  # Convert to PIL.Image
-        pil_img = op(pil_img, severity)
-        return np.asarray(pil_img).transpose(2, 0, 1) / 255.
+    def apply_augment(self, images, op, severity):
+        augmented_images = []
+        for image in images:
+            image = np.clip(image.detach().cpu().numpy() * 255., 0, 255).astype(np.uint8)
+            pil_img = Image.fromarray(image.transpose(1, 2, 0))  # Convert to PIL.Image
+            pil_img = op(pil_img, severity.item())
+            augmented_image = np.asarray(pil_img).transpose(2, 0, 1) / 255.
+            augmented_images.append(torch.tensor(augmented_image, dtype=torch.float32, device=images.device))
+        return torch.stack(augmented_images)
