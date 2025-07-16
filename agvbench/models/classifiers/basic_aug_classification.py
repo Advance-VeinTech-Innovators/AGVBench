@@ -11,7 +11,7 @@ from .base_model import BaseModel
 from .. import builder
 from ..registry import MODELS
 from ..augments.basic import (cutout, gridmask, ricap, yoco, spnoise, randomblur, randnquant,
-                              keepaugment, softaugment)
+                              keepaugment, softaugment, smdwt_pca)
 from ..utils import PlotTensor
 
 
@@ -66,10 +66,10 @@ class BasicAugClassification(BaseModel):
         self.aug_mode = aug_mode if isinstance(aug_mode, list) else [str(aug_mode)]
         self.masking_mode = {
             "cutout": cutout, "gridmask": gridmask, "spnoise": spnoise, "randomblur": randomblur,
-            "randnquant": randnquant,
+            "randnquant": randnquant, "smdwt_pca": smdwt_pca
         }
         self.cutting_mode = {
-            "ricap": ricap, "yoco": yoco,
+            "ricap": ricap, "yoco": yoco
         }
         self.policy_mode = {
             "softaugment": softaugment, "keepaugment": keepaugment,
@@ -85,6 +85,7 @@ class BasicAugClassification(BaseModel):
             yoco=dict(),
             softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
                         iou=False, n_classes=220),
+            smdwt_pca=dict(thresholds=(0.55, 0.65), wavelet=('bior1.3', 'bior4.4', 'bior6.8')),
             keepaugment=dict(threshold=0.5, mode='paste', randaugment_n=2, randaugment_m=9),
             vanilla=dict(),
         )
@@ -169,11 +170,11 @@ class BasicAugClassification(BaseModel):
         return_mask, mask = False, None  # return sample mask in [N, 1, H, W]
         
         # applying masking sample augmentation methods
-        if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur", "randnquant"]:
+        if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur", "randnquant", "smdwt_pca"]:
             if cur_mode in ["cutout", "gridmask", "randomblur"]:
                 img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, 
                                                 return_mask=return_mask, **self.aug_args[cur_mode])
-            elif cur_mode in ["spnoise", "randnquant"]:
+            elif cur_mode in ["spnoise", "randnquant", "smdwt_pca"]:
                 img = self.masking_mode[cur_mode](img, dist_mode=False, 
                                                 return_mask=return_mask, **self.aug_args[cur_mode])
             if return_mask:

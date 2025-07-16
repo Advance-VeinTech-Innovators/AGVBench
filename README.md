@@ -102,7 +102,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 - **Specific-level**
   1. [x] StarMix
   2. [x] MixedAA
-  3. [ ] Explainable AI
+  3. [x] Explainable AI
   4. [ ] MTPV
 
 ### 📊 2. Experiments Settings

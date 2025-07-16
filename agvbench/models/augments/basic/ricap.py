@@ -63,8 +63,3 @@ def ricap(img,
 
     return patched_images, (gt_label_, lam_)
 
-# For test
-# if __name__=="__main__":
-    # img = torch.rand([4,3,224,224])
-    # gt_label = torch.tensor([1,2,3,4])
-    # x, y = ricap(img, gt_label, alpha=1)

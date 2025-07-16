@@ -6,10 +6,11 @@ from .noise import spnoise
 from .randnquant import randnquant
 from .ricap import ricap
 from .softaugment import softaugment
+from .smdwt import smdwt_pca
 from .yoco import yoco
 
 __all__ = [
     'randomblur',  'spnoise', 'randnquant', 
     'cutout', 'gridmask', 'ricap', 'yoco',
-    'keepaugment', 'softaugment',
+    'keepaugment', 'softaugment', 'smdwt_pca',
 ]
