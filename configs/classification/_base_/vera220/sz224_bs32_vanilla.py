@@ -10,7 +10,6 @@ dataset_type = 'ClassificationDataset'
 img_norm_cfg = dict(mean=[0.4399, 0.4399, 0.4399], std=[0.114, 0.114, 0.114])
 train_pipeline = [
     dict(type='RandomResizedCrop', size=224, interpolation=3),  # bicubic
-    #  dict(type='Resize', size=224),
 ]
 test_pipeline = [
     dict(type='Resize', size=256, interpolation=3),  # 0.85

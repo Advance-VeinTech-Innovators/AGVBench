@@ -85,7 +85,7 @@ class BasicAugClassification(BaseModel):
             yoco=dict(),
             softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
                         iou=False, n_classes=220),
-            smdwt_pca=dict(thresholds=(0.55, 0.65), wavelet=('bior1.3', 'bior4.4', 'bior6.8')),
+            smdwt_pca=dict(wavelet="5/3"),
             keepaugment=dict(threshold=0.5, mode='paste', randaugment_n=2, randaugment_m=9),
             vanilla=dict(),
         )

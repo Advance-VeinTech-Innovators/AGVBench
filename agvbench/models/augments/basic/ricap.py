@@ -44,8 +44,6 @@ def ricap(img,
 
     # select four img
     cropped_images = {}
-    # gt_label_ = {}
-    # lam_ = {}
     gt_label_ = []
     lam_ = []
     for k in range(4):

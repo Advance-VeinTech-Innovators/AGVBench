@@ -139,12 +139,15 @@ def main():
     # create work_dir
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
     parts = args.checkpoint.split('/')
-    sub_dir = f"{parts[-4]}/{parts[-3]}/{parts[-2]}"
+    for i in range(len(parts)):
+        if '300e' in parts[i] or '600e' in parts[i]:
+            loca_index = i
+    sub_dir = f"{parts[loca_index - 1]}/{parts[loca_index]}/{parts[-2]}"
     npy_dir = osp.join(args.work_dir, sub_dir)
 
     # logger
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    log_file = osp.join(cfg.work_dir, f'eer_{parts[-3]}_{parts[-2]}.log')
+    log_file = osp.join(cfg.work_dir, f'eer_{parts[loca_index]}_{parts[-2]}.log')
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
 
     # build the dataloader
