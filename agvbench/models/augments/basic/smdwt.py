@@ -38,16 +38,16 @@ def smdwt_pca(img,
     for i in range(N):
         intensity = gray_np[i].mean()
         if intensity < thresholds[0]:
-            wavelet = wavelet[0]  # dark -> 13/7
+            current_wavelet = wavelet[0]  # dark -> 13/7
         elif intensity > thresholds[1]:
-            wavelet = wavelet[2]  # bright -> 5/3
+            current_wavelet = wavelet[2]  # bright -> 5/3
         else:
-            wavelet = wavelet[1]  # mid -> 9/7
+            current_wavelet = wavelet[1]  # mid -> 9/7
 
-        mask.append(wavelet)
+        mask.append(current_wavelet)
 
         # Apply DWT and extract LL
-        coeffs2 = pywt.dwt2(gray_np[i], wavelet=wavelet)
+        coeffs2 = pywt.dwt2(gray_np[i], wavelet=current_wavelet)
         LL, _ = coeffs2
 
         # Convert LL to tensor and interpolate to 224 X 224
