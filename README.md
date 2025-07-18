@@ -89,7 +89,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
        2. [x] PuzzleMix
        3. [x] GudiedMix
        4. [x] AutoMix
-  - Generating (*This depends on the difficulty of coding, and if it is difficult to implement, we can choose not to include it.*)
+  - Generating (**We do not use generation-based augmentation since they can't cross domain.**)
     1. [ ] GANs
     2. [ ] Diffusion Model
 - **Label-level**
@@ -102,7 +102,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 - **Specific-level**
   1. [x] StarMix
   2. [x] MixedAA
-  3. [x] Explainable AI
+  3. [x] Explainable AI (**Somthing wrong with this method, they can't training normal, I don't konw why happend this.**)
   4. [ ] MTPV
 
 ### 📊 2. Experiments Settings
