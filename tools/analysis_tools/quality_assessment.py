@@ -15,10 +15,10 @@ try:
 except:
     ssim = None
 
-from ..agvbench.models.augments.mixups import (
+from agvbench.models.augments.mixups import (
                 cutmix, fmix, gridmix, mixup, resizemix, smoothmix,
                 augmix, starmix, augmix)
-from ..agvbench.models.augments.basic import yoco
+from agvbench.models.augments.basic import yoco
 import mmcv
 from mmcv import DictAction
 from agvbench.utils import get_root_logger, print_log, setup_multi_processes, traverse_replace
