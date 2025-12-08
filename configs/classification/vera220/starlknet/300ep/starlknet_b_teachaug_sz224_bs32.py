@@ -13,17 +13,17 @@ model = dict(
         n_dim=128, dropout_ratio=0.8, with_context=True,
         ),
     backbone=dict(
-        type='AMPVNet',
-        out_indices=(3,),
-        ),
+        type='StarLKNet',
+        arch="base",
+    ),
     head_one=dict(
-        type='ClsAMPVHead', 
+        type='ClsHead', 
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=512, num_classes=220),
+        with_avg_pool=True, multi_label=False, in_channels=1024, num_classes=220),
     head_aug=dict( 
-        type='ClsAMPVHead',
+        type='ClsHead',
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=512, num_classes=220),
+        with_avg_pool=True, multi_label=False, in_channels=1024, num_classes=220),
     head_weights=dict( head_one_q=1, head_aug_k=1),
 )
 
@@ -41,7 +41,7 @@ custom_hooks = [
 ]
 
 # optimizer
-optimizer = dict(type='AdamW', lr=1e-3, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')

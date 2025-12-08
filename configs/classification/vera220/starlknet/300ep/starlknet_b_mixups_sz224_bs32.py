@@ -20,18 +20,18 @@ model = dict(
         resizemix=dict(scope=(0.1, 0.8), use_alpha=True),
     ),
     backbone=dict(
-        type='AMPVNet',
-        out_indices=(3,),
-        ),
+        type='StarLKNet',
+        arch="base",
+    ),
     head=dict(
-        type='ClsAMPVMixupHead',  # default CE
-        loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=512, num_classes=220),
+        type='ClsMixupHead',
+        loss=dict(type='CrossEntropyLoss', loss_weight=1.0),
+        with_avg_pool=True, in_channels=1024, num_classes=220)
 )
 
 
 # optimizer
-optimizer = dict(type='AdamW', lr=1e-3, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')

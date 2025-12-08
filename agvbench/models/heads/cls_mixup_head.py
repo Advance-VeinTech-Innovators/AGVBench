@@ -97,7 +97,8 @@ class ClsMixupHead(BaseModule):
             assert multi_label == True and loss['type'] == 'CrossEntropyLoss'
         # fc layer
         self.fc = nn.Linear(in_channels, num_classes)
-        if frozen:
+        self.frozen = frozen
+        if self.frozen:
             self._freeze()
         # post-process for inference
         post_process = getattr(self.criterion, "post_process", "none")
