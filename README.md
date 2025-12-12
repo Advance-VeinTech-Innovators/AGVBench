@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+- **2025.12.12** Fixed bugs of EER and StarMix. Added config files of StarLKNet, AMPVNet and FVRASNet.
 - **2025.07.15** We supported a vein-specific augmentation method, **"MAdAugment"[[IEEE TIM 2024]](https://xplorestaging.ieee.org/document/10530126)**.
 - **2025.07.13** We supported compute FPR@TPR for biometric task, and supported **"AMPVNet"[[IEEE TIFS 2024]](https://ieeexplore.ieee.org/document/10474047)**.
 - **2025.07.12** We supported some Randomized Quantization augmentation: **"Randomized Quantization"[[ICCV 2023]](https://arxiv.org/abs/2212.08663)**.
