@@ -97,7 +97,8 @@ class ClsMixupHead(BaseModule):
             assert multi_label == True and loss['type'] == 'CrossEntropyLoss'
         # fc layer
         self.fc = nn.Linear(in_channels, num_classes)
-        if frozen:
+        self.frozen = frozen
+        if self.frozen:
             self._freeze()
         # post-process for inference
         post_process = getattr(self.criterion, "post_process", "none")
@@ -718,3 +719,11 @@ class ClsUncertainMixupHead(BaseModule):
             losses['acc'] = accuracy(cls_score, labels[0])
             losses['acc_mix'] = accuracy_mixup(cls_score, labels)
         return losses
+
+
+@HEADS.register_module
+class ClsVGGMixupHead(ClsMixupHead):
+    def __init__(self,
+                 **kwargs):
+        super(ClsVGGMixupHead, self).__init__()
+        self.fc = nn.Identity(self.in_channels, self.num_classes)

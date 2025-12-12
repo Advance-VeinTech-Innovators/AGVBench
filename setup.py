@@ -167,8 +167,8 @@ if __name__ == '__main__':
         description='A Comprehensive Benchmark and Analysis of Data Augmentation in Vein Identification',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='Jin Xin',
-        author_email='jinxin20001118@gmail.com',
+        author='Xin Jin',
+        author_email='jinxin86@westlake.edu.cn',
         keywords='computer vision, image classification, biometric identification, data augmentation'
         'mixup classification',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),

@@ -54,13 +54,19 @@ def parse_args():
     parser.add_argument(
         '--num_class',
         type=int,
-        default=None,  # choose head : head0 or acc_mix
+        default=None, 
         help='number of classes')
     parser.add_argument(
         '--name',
         type=str,
-        default=None,  # choose head : head0 or acc_mix
+        default=None,         # save name
         help='number of classes')
+    parser.add_argument(
+        '--dataset',
+        type=str,
+        default='tju600',     # dataset name
+        choices=['tju600', 'vear220', 'casia200', 'hkpu500']
+        help='name of datasets')
     parser.add_argument(
         '--work_dir',
         type=str,
@@ -113,7 +119,7 @@ def main():
     # work_dir is determined in this priority: CLI > segment in file > filename
     if args.work_dir is not None:
         # update configs according to CLI args if args.work_dir is not None
-        cfg.work_dir = args.work_dir
+        cfg.work_dir = os.join(args.work_dir, args.datset)
     elif cfg.get('work_dir', None) is None:
         # use config filename as default work_dir if cfg.work_dir is None
         work_type = args.config.split('/')[1]
@@ -137,17 +143,18 @@ def main():
         init_dist(args.launcher, **cfg.dist_params)
 
     # create work_dir
-    mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
     parts = args.checkpoint.split('/')
     for i in range(len(parts)):
         if '300e' in parts[i] or '600e' in parts[i]:
-            loca_index = i
-    sub_dir = f"{parts[loca_index - 1]}/{parts[loca_index]}/{parts[-2]}"
+            ep_idx = i
+    sub_dir = f"{parts[ep_idx - 1]}/{parts[ep_idx]}/{parts[-2]}"
     npy_dir = osp.join(args.work_dir, sub_dir)
+    log_dir = osp.join(cfg.work_dir, parts[ep_idx - 1])
+    mmcv.mkdir_or_exist(osp.abspath(log_dir))
 
     # logger
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    log_file = osp.join(cfg.work_dir, f'eer_{parts[loca_index]}_{parts[-2]}.log')
+    log_file = osp.join(log_dir, f'eer_{parts[loca_index]}_{parts[-2]}.log')
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
 
     # build the dataloader
@@ -166,7 +173,7 @@ def main():
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
         if args.keys == 'eer':
-            print_log("It`s EER for Biometric Idantification", logger=logger)
+            print_log("It`s EER for Biometric Identification", logger=logger)
             outputs = single_gpu_test(model, data_loader)
             result, fpr, list = dataset.eer(outputs[args.head], num_class=args.num_class, name=args.name, work_dir=npy_dir)
             print_log("EER Result: {}%".format(result * 100), logger=logger)

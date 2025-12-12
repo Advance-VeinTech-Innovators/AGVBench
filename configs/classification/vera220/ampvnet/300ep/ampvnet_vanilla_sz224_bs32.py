@@ -32,7 +32,6 @@ model = dict(
 
 
 # optimizer
-# optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 optimizer = dict(type='AdamW', lr=3e-4, weight_decay=0.01, eps=1e-08, betas=(0.9, 0.999))
 
 # use_fp16=True

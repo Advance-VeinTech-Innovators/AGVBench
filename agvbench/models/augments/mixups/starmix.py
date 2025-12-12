@@ -36,7 +36,7 @@ def starmix(img,
                     gaussian_kernel(h, h, w, sigma1), 
                     gaussian_kernel(h, h, w, sigma2), 
                     gaussian_kernel(h, h * 2, w * 2, sigma1)
-                ].cuda()
+                ]
 
         return (sum(masks) / 3).sigmoid() * lam
 
