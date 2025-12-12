@@ -115,6 +115,7 @@ work_dirs/
 /agvbench/.mim
 tools/exp_bash/
 pretrains
+configs/classification/settings/
 
 # Pytorch
 *.pth

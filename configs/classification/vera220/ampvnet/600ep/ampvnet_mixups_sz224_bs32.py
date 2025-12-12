@@ -31,7 +31,7 @@ model = dict(
 
 
 # optimizer
-optimizer = dict(type='AdamW', lr=3e-4, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
+optimizer = dict(type='AdamW', lr=1e-3, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')
