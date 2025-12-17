@@ -19,7 +19,7 @@ from .madaug_block import MAdAugBlock, PolicyNetwork, NeuralAugmenter
 from .cls_vein_head import ClsFVRASHead, ClsPVHead, ClsAMPVHead, ClsFVRASMixupHead, ClsPVMixupHead, ClsAMPVMixupHead
 
 __all__ = [
-    'A2MIMHead', 'AdaptiveMask', 'ClsHead', 'ClsMixupHead', 'ClsUncertainMixupHead', 'ClsVGGMixupHead'
+    'A2MIMHead', 'AdaptiveMask', 'ClsHead', 'ClsMixupHead', 'ClsUncertainMixupHead', 'ClsVGGMixupHead',
     'ContrastiveHead', 'DINOHead',
     'EfficientFormerClsHead', 'HCRHead', 'MetaFormerClsHead', 'LeViTClsHead', 'StackedLinearClsHead', 'VanillaNetClsHead',
     'LatentPredictHead', 'LatentClsHead', 'LatentCrossCorrelationHead',
