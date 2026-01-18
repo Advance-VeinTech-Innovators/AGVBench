@@ -1,4 +1,4 @@
-_base_ = "../ampvnet_basicaug_sz224_bs32.py"
+_base_ = "../ampvnet_mixups_sz224_bs32.py"
 
 model = dict(
     alpha=2.0,
