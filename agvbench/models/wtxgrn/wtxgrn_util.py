@@ -1,0 +1,281 @@
+
+import math
+import einops
+import torch
+from torch import nn
+import pywt
+import pywt.data
+import torch.nn.functional as F
+from functools import partial
+
+
+def create_wavelet_filter(wave, in_size, out_size, type=torch.float):
+    w = pywt.Wavelet(wave)
+    dec_hi = torch.tensor(w.dec_hi[::-1], dtype=type)
+    dec_lo = torch.tensor(w.dec_lo[::-1], dtype=type)
+    dec_filters = torch.stack([dec_lo.unsqueeze(0) * dec_lo.unsqueeze(1),
+                               dec_lo.unsqueeze(0) * dec_hi.unsqueeze(1),
+                               dec_hi.unsqueeze(0) * dec_lo.unsqueeze(1),
+                               dec_hi.unsqueeze(0) * dec_hi.unsqueeze(1)], dim=0)
+
+    dec_filters = dec_filters[:, None].repeat(in_size, 1, 1, 1)
+
+    rec_hi = torch.tensor(w.rec_hi[::-1], dtype=type).flip(dims=[0])
+    rec_lo = torch.tensor(w.rec_lo[::-1], dtype=type).flip(dims=[0])
+    rec_filters = torch.stack([rec_lo.unsqueeze(0) * rec_lo.unsqueeze(1),
+                               rec_lo.unsqueeze(0) * rec_hi.unsqueeze(1),
+                               rec_hi.unsqueeze(0) * rec_lo.unsqueeze(1),
+                               rec_hi.unsqueeze(0) * rec_hi.unsqueeze(1)], dim=0)
+
+    rec_filters = rec_filters[:, None].repeat(out_size, 1, 1, 1)
+
+    return dec_filters, rec_filters
+
+
+def wavelet_transform(x, filters):
+    b, c, h, w = x.shape
+    pad = (filters.shape[2] // 2 - 1, filters.shape[3] // 2 - 1)
+    x = F.conv2d(x, filters, stride=2, groups=c, padding=pad)
+    x = x.reshape(b, c, 4, h // 2, w // 2)
+    return x
+
+
+def inverse_wavelet_transform(x, filters):
+    b, c, _, h_half, w_half = x.shape
+    pad = (filters.shape[2] // 2 - 1, filters.shape[3] // 2 - 1)
+    x = x.reshape(b, c * 4, h_half, w_half)
+    x = F.conv_transpose2d(x, filters, stride=2, groups=c, padding=pad)
+    return x
+
+
+class WTConv2d(nn.Module):
+    def __init__(self, in_channels, out_channels, kernel_size=5, stride=1, bias=True, wt_levels=1, wt_type='db1'):
+        super(WTConv2d, self).__init__()
+
+        assert in_channels == out_channels
+
+        self.in_channels = in_channels
+        self.wt_levels = wt_levels
+        self.stride = stride
+        self.dilation = 1
+
+        self.wt_filter, self.iwt_filter = create_wavelet_filter(wt_type, in_channels, in_channels, torch.float)
+        self.wt_filter = nn.Parameter(self.wt_filter, requires_grad=False)
+        self.iwt_filter = nn.Parameter(self.iwt_filter, requires_grad=False)
+
+        self.wt_function = partial(wavelet_transform, filters=self.wt_filter)
+        self.iwt_function = partial(inverse_wavelet_transform, filters=self.iwt_filter)
+
+        self.base_conv = nn.Conv2d(in_channels, in_channels, kernel_size, padding='same', stride=1, dilation=1,
+                                   groups=in_channels, bias=bias)
+        self.base_scale = _ScaleModule([1, in_channels, 1, 1])
+
+        self.wavelet_convs = nn.ModuleList(
+            [nn.Conv2d(in_channels * 4, in_channels * 4, kernel_size, padding='same', stride=1, dilation=1,
+                       groups=in_channels * 4, bias=False) for _ in range(self.wt_levels)]
+        )
+        self.wavelet_scale = nn.ModuleList(
+            [_ScaleModule([1, in_channels * 4, 1, 1], init_scale=0.1) for _ in range(self.wt_levels)]
+        )
+
+        if self.stride > 1:
+            self.stride_filter = nn.Parameter(torch.ones(in_channels, 1, 1, 1), requires_grad=False)
+            self.do_stride = lambda x_in: F.conv2d(x_in, self.stride_filter, bias=None, stride=self.stride,
+                                                   groups=in_channels)
+        else:
+            self.do_stride = None
+
+    def forward(self, x):
+
+        x_ll_in_levels = []
+        x_h_in_levels = []
+        shapes_in_levels = []
+
+        curr_x_ll = x
+
+        for i in range(self.wt_levels):
+            curr_shape = curr_x_ll.shape
+            shapes_in_levels.append(curr_shape)
+            if (curr_shape[2] % 2 > 0) or (curr_shape[3] % 2 > 0):
+                curr_pads = (0, curr_shape[3] % 2, 0, curr_shape[2] % 2)
+                curr_x_ll = F.pad(curr_x_ll, curr_pads)
+
+            curr_x = self.wt_function(curr_x_ll)
+            curr_x_ll = curr_x[:, :, 0, :, :]
+            shape_x = curr_x.shape
+            curr_x_tag = curr_x.reshape(shape_x[0], shape_x[1] * 4, shape_x[3], shape_x[4])
+            curr_x_tag = self.wavelet_scale[i](self.wavelet_convs[i](curr_x_tag))
+            curr_x_tag = curr_x_tag.reshape(shape_x)
+
+            x_ll_in_levels.append(curr_x_tag[:, :, 0, :, :])
+            x_h_in_levels.append(curr_x_tag[:, :, 1:4, :, :])
+
+        next_x_ll = 0
+
+        for i in range(self.wt_levels - 1, -1, -1):
+            curr_x_ll = x_ll_in_levels.pop()
+            curr_x_h = x_h_in_levels.pop()
+            curr_shape = shapes_in_levels.pop()
+            curr_x_ll = curr_x_ll + next_x_ll
+
+            curr_x = torch.cat([curr_x_ll.unsqueeze(2), curr_x_h], dim=2)
+            next_x_ll = self.iwt_function(curr_x)
+            next_x_ll = next_x_ll[:, :, :curr_shape[2], :curr_shape[3]]
+
+        x_tag = next_x_ll
+        assert len(x_ll_in_levels) == 0
+
+        x = self.base_scale(self.base_conv(x))
+        x = x + x_tag
+
+        if self.do_stride is not None:
+            x = self.do_stride(x)
+
+        return x
+
+
+class _ScaleModule(nn.Module):
+    def __init__(self, dims, init_scale=1.0):
+        super(_ScaleModule, self).__init__()
+        self.dims = dims
+        self.weight = nn.Parameter(torch.ones(*dims) * init_scale)
+        self.bias = None
+
+    def forward(self, x):
+        return torch.mul(self.weight, x)
+
+
+class SequenceConv2d(nn.Conv2d):
+    def __init__(self, *args, seqlens=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.seqlens = seqlens
+
+    def forward(self, x):
+        assert x.ndim == 3
+        if self.seqlens is None:
+            # assuming square input
+            h = math.sqrt(x.size(1))
+            assert h.is_integer()
+            h = int(h)
+        else:
+            assert len(self.seqlens) == 2
+            h = self.seqlens[0]
+        x = einops.rearrange(x, "b (h w) d -> b d h w", h=h)
+        x = super().forward(x)
+        x = einops.rearrange(x, "b d h w -> b (h w) d")
+        return x
+
+
+class WTSequenceConv2d(WTConv2d):
+    def __init__(self, *args, seqlens=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.seqlens = seqlens
+
+    def forward(self, x):
+        assert x.ndim == 3
+        if self.seqlens is None:
+            # assuming square input
+            h = math.sqrt(x.size(1))
+            assert h.is_integer()
+            h = int(h)
+        else:
+            assert len(self.seqlens) == 2
+            h = self.seqlens[0]
+        x = einops.rearrange(x, "b (h w) d -> b d h w", h=h)
+        x = super().forward(x)
+        x = einops.rearrange(x, "b d h w -> b (h w) d")
+        return x
+
+
+# from kappamodules.layers import DropPath
+class DropPath(nn.Sequential):
+    """
+    Efficiently drop paths (Stochastic Depth) per sample such that dropped samples are not processed.
+    This is a subclass of nn.Sequential and can be used either as standalone Module or like nn.Sequential.
+    Examples::
+        >>> # use as nn.Sequential module
+        >>> sequential_droppath = DropPath(nn.Linear(4, 4), drop_prob=0.2)
+        >>> y = sequential_droppath(torch.randn(10, 4))
+
+        >>> # use as standalone module
+        >>> standalone_layer = nn.Linear(4, 4)
+        >>> standalone_droppath = DropPath(drop_prob=0.2)
+        >>> y = standalone_droppath(torch.randn(10, 4), standalone_layer)
+    """
+
+    def __init__(self, *args, drop_prob: float = 0., scale_by_keep: bool = True, stochastic_drop_prob: bool = False):
+        super().__init__(*args)
+        assert 0. <= drop_prob < 1.
+        self._drop_prob = drop_prob
+        self.scale_by_keep = scale_by_keep
+        self.stochastic_drop_prob = stochastic_drop_prob
+
+    @property
+    def drop_prob(self):
+        return self._drop_prob
+
+    @drop_prob.setter
+    def drop_prob(self, value):
+        assert 0. <= value < 1.
+        self._drop_prob = value
+
+    @property
+    def keep_prob(self):
+        return 1. - self.drop_prob
+
+    def forward(self, x, residual_path=None, residual_path_kwargs=None):
+        assert (len(self) == 0) ^ (residual_path is None)
+        residual_path_kwargs = residual_path_kwargs or {}
+        if self.drop_prob == 0. or not self.training:
+            if residual_path is None:
+                return x + super().forward(x)
+            else:
+                return x + residual_path(x, **residual_path_kwargs)
+        # generate indices to keep (propagated through transform path)
+        bs = len(x)
+        if self.stochastic_drop_prob:
+            perm = torch.empty(bs, device=x.device).bernoulli_(self.keep_prob).nonzero().squeeze(1)
+            scale = 1 / self.keep_prob
+        else:
+            keep_count = max(int(bs * self.keep_prob), 1)
+            scale = bs / keep_count
+            perm = torch.randperm(bs, device=x.device)[:keep_count]
+
+        # propagate
+        if self.scale_by_keep:
+            alpha = scale
+        else:
+            alpha = 1.
+        # reduce kwargs (e.g. used for DiT block where scale/shift/gate is passed and also has to be reduced)
+        residual_path_kwargs = {
+            key: value[perm] if torch.is_tensor(value) else value
+            for key, value in residual_path_kwargs.items()
+        }
+        if residual_path is None:
+            residual = super().forward(x[perm])
+        else:
+            residual = residual_path(x[perm], **residual_path_kwargs)
+        return torch.index_add(
+            x.flatten(start_dim=1),
+            dim=0,
+            index=perm,
+            source=residual.to(x.dtype).flatten(start_dim=1),
+            alpha=alpha,
+        ).view_as(x)
+
+    def extra_repr(self):
+        return f'drop_prob={round(self.drop_prob, 3):0.3f}'
+
+
+def normal_init(module, mean=0, std=1, bias=0):
+    if hasattr(module, 'weight') and module.weight is not None:
+        nn.init.normal_(module.weight, mean, std)
+    if hasattr(module, 'bias') and module.bias is not None:
+        nn.init.constant_(module.bias, bias)
+
+
+def constant_init(module, val, bias=0):
+    if hasattr(module, 'weight') and module.weight is not None:
+        nn.init.constant_(module.weight, val)
+    if hasattr(module, 'bias') and module.bias is not None:
+        nn.init.constant_(module.bias, bias)

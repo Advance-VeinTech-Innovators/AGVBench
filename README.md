@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+- **2026.01.19** Support **"RSNet"[[IEEE TIFS 2025]](https://ieeexplore.ieee.org/abstract/document/10896759)** and **"WTxGRN"[[IEEE TIFS 2025]](https://ieeexplore.ieee.org/abstract/document/11095785)**.
 - **2025.12.12** Fixed bugs of EER and StarMix. Added config files of StarLKNet, AMPVNet and FVRASNet.
 - **2025.07.15** We supported a vein-specific augmentation method, **"MAdAugment"[[IEEE TIM 2024]](https://xplorestaging.ieee.org/document/10530126)**.
 - **2025.07.13** We supported compute FPR@TPR for biometric task, and supported **"AMPVNet"[[IEEE TIFS 2024]](https://ieeexplore.ieee.org/document/10474047)**.
@@ -43,9 +44,7 @@ pip install openmim
 mim install mmcv-full
 git clone https://github.com/Advance-VeinTech-Innovators/AGVBench.git
 cd agvbench
-pip install -r requirements/readthedocs.txt
-pip install -r requirements/runtime.txt
-pip install -r requirements/tests.txt
+pip install -r requirements.txt
 python setup.py develop
 ```
 

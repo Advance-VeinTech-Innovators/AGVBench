@@ -14,7 +14,7 @@ from .. import builder
 from ..registry import MODELS
 from ..augments.mixups import (cutmix, fmix, gridmix, mixup, resizemix, saliencymix, smoothmix,
                         alignmix, attentivemix, puzzlemix, transmix, snapmix,
-                        mixpro, tokenmix, smmix, tla, guidedmix, augmix, starmix)
+                        mixpro, tokenmix, smmix, tla, guidedmix, augmix, starmix, starmixplus)
 from ..augments.mixups.guidedmix import SpectralResidual
 from ..utils import PlotTensor
 
@@ -87,7 +87,7 @@ class MixUpClassification(BaseModel):
         self.dynamic_mode = {
             "alignmix": alignmix, "attentivemix": attentivemix, "puzzlemix": puzzlemix,
             "automix": self._mixblock, "samix": self._mixblock, "snapmix": snapmix, 
-            "guidedmix": guidedmix,
+            "guidedmix": guidedmix, "starmixplus": starmixplus,
             # Mixup methods for ViTs
             "transmix": transmix, "tokenmix": tokenmix, "mixpro": mixpro, "smmix": smmix,
             "tla": tla,
@@ -123,6 +123,7 @@ class MixUpClassification(BaseModel):
             smmix=dict(side=14, min_side_ratio=0.25, max_side_ratio=0.75),
             tla=dict(),
             vanilla=dict(),
+            starmixplus=dict(k=4, sigma=30.0, auto_scale_sigma=True),
         )
         _supported_mode = ["vanilla"] + list(self.dynamic_mode.keys()) + list(self.static_mode.keys())
         for _mode in _supported_mode:
@@ -217,7 +218,7 @@ class MixUpClassification(BaseModel):
             img = F.interpolate(img,
                                 scale_factor=kwargs.get("feat_size", 224) / img.size(2), mode="bilinear")
             features = self.backbone_k(img)[0]
-        elif cur_mode in ["puzzlemix", "snapmix", "guidedmix"]:
+        elif cur_mode in ["puzzlemix", "snapmix", "guidedmix", "starmixplus"]:
             input_var = Variable(img, requires_grad=True)
             self.backbone.eval()
             self.head.eval()
@@ -242,6 +243,11 @@ class MixUpClassification(BaseModel):
                     sr = SpectralResidual()
                     with torch.no_grad():
                         features = sr.transform_spectral_residual(input_var)
+            elif cur_mode == "starmixplus":
+                pred = self.head(self.backbone(input_var))
+                loss = self.head.loss(pred, gt_label)["loss"]
+                loss.backward(retain_graph=False)
+                features = torch.sqrt(torch.mean(input_var.grad ** 2, dim=1))  # grads
             else:
                 raise ValueError("Chosen saliency-based method do not include in these methods. Please check it.")
             # clear grads in models
@@ -318,8 +324,8 @@ class MixUpClassification(BaseModel):
             cur_mode = self.mix_args["transmix"].get("mix_mode", "cutmix")  # sample mixup mode
 
         # applying dynamic sample mixup methods
-        if cur_mode in ["attentivemix", "automix", "puzzlemix", "samix", "snapmix", "guidedmix"]:
-            if cur_mode in ["attentivemix", "puzzlemix", "snapmix", "guidedmix"]:
+        if cur_mode in ["attentivemix", "automix", "puzzlemix", "samix", "snapmix", "guidedmix", "starmixplus"]:
+            if cur_mode in ["attentivemix", "puzzlemix", "snapmix", "guidedmix", "starmixplus"]:
                 features = self._features(
                     img, gt_label=gt_label, cur_mode=cur_mode, **self.mix_args[cur_mode])
                 mix_args = dict(alpha=cur_alpha, dist_mode=False, return_mask=return_mask,

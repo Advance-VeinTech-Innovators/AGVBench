@@ -14,4 +14,4 @@ six
 tensorboard
 timm
 tqdm
-PyWavelets
+PyWavelets>=1.4.1
