@@ -1,5 +1,5 @@
 _base_ = [
-    '../../../_base_/vera220/sz224_bs32_vanilla.py',
+    '../../../_base_/casia200/sz224_bs32_vanilla.py',
     '../../../_base_/default_runtime.py',
 ]
 
@@ -7,7 +7,7 @@ _base_ = [
 model = dict(
     type='MixUpClassification',
     alpha=1.0,
-    mix_mode="starmixplus",
+    mix_mode="mixup",
     mix_args=dict(
         augmix=dict(mixture_depth=-1, mixture_width=3, severity=1),
         fmix=dict(decay_power=3, size=(224,224), max_soft=0., reformulate=False),
@@ -18,21 +18,21 @@ model = dict(
             mp=None, block_num=4,  # block_num<=4 and mp=2/4 for fast training
             beta=1.2, gamma=0.5, eta=0.2, neigh_size=4, n_labels=3, t_eps=0.8),
         resizemix=dict(scope=(0.1, 0.8), use_alpha=True),
-        starmixplus=dict(k=4, sigma=30.0, auto_scale_sigma=True),
     ),
     backbone=dict(
-        type='FVCNN',
-        out_indices=(3,),
-        ),
+        type='VGG', 
+        depth=16,
+        num_classes=200,
+    ),
     head=dict(
-        type='ClsHead',  # default CE
-        loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=500, num_classes=220),
+        type='ClsVGGHead',
+        loss=dict(type='CrossEntropyLoss', loss_weight=1.0),
+        num_classes=None)
 )
 
 
 # optimizer
-optimizer = dict(type='AdamW', lr=1e-3, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')

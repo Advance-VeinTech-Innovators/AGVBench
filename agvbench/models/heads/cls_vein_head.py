@@ -123,9 +123,9 @@ class ClsPVHead(BaseClsHead):
         x = self.relu(x)
         x = self.drop(x)
         x = self.fc2(x)
-        return 
-        
-
+        if post_process:
+            x = self.post_process(x)
+        return x
 
 
 @HEADS.register_module
@@ -289,9 +289,9 @@ class ClsPVMixupHead(ClsMixupHead):
         x = self.relu(x)
         x = self.drop(x)
         x = self.fc2(x)
-        return 
-        
-
+        if post_process:
+            x = self.post_process(x)
+        return x
 
 
 @HEADS.register_module

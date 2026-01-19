@@ -1,5 +1,5 @@
 _base_ = [
-    '../../../_base_/vera220/sz224_bs32_vanilla.py',
+    '../../../_base_/casia200/sz224_bs32_vanilla.py',
     '../../../_base_/default_runtime.py',
 ]
 
@@ -21,13 +21,13 @@ model = dict(
         starmixplus=dict(k=4, sigma=30.0, auto_scale_sigma=True),
     ),
     backbone=dict(
-        type='FVCNN',
+        type='AMPVNet',
         out_indices=(3,),
         ),
     head=dict(
-        type='ClsHead',  # default CE
+        type='ClsAMPVHead',  # default CE
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=500, num_classes=220),
+        with_avg_pool=True, multi_label=False, in_channels=512, num_classes=200),
 )
 
 

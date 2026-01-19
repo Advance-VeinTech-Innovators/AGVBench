@@ -1,5 +1,5 @@
 _base_ = [
-    '../../../_base_/vera220/sz224_bs32_vanilla.py',
+    '../../../_base_/casia200/sz224_bs32_vanilla.py',
     '../../../_base_/default_runtime.py',
 ]
 
@@ -21,18 +21,19 @@ model = dict(
         starmixplus=dict(k=4, sigma=30.0, auto_scale_sigma=True),
     ),
     backbone=dict(
-        type='FVCNN',
-        out_indices=(3,),
-        ),
+        type='VGG', 
+        depth=16,
+        num_classes=200,
+    ),
     head=dict(
-        type='ClsHead',  # default CE
-        loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=500, num_classes=220),
+        type='ClsVGGHead',
+        loss=dict(type='CrossEntropyLoss', loss_weight=1.0),
+        num_classes=None)
 )
 
 
 # optimizer
-optimizer = dict(type='AdamW', lr=1e-3, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
+optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')
@@ -43,4 +44,3 @@ lr_config = dict(policy='CosineAnnealing', min_lr=0.)
 
 # runtime settings
 runner = dict(type='EpochBasedRunner', max_epochs=600)
-

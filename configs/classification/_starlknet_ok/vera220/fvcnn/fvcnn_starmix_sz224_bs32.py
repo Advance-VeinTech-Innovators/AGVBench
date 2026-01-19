@@ -27,7 +27,7 @@ model = dict(
     head=dict(
         type='ClsHead',  # default CE
         loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
-        with_avg_pool=True, multi_label=False, in_channels=250, num_classes=220),
+        with_avg_pool=True, multi_label=False, in_channels=500, num_classes=220),
 )
 
 
