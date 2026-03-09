@@ -6,8 +6,8 @@ _base_ = [
 # model settings
 model = dict(
     type='MixUpClassification',
-    alpha=0.2,
-    mix_mode="cutmix",
+    alpha=1.0,
+    mix_mode="mixup",
     mix_args=dict(
         augmix=dict(mixture_depth=-1, mixture_width=3, severity=1),
         fmix=dict(decay_power=3, size=(224,224), max_soft=0., reformulate=False),
@@ -31,14 +31,14 @@ model = dict(
 
 
 # optimizer
-optimizer = dict(type='AdamW', lr=1e-3, weight_decay=1e-2, eps=1e-6, betas=(0.9, 0.999))
+optimizer = dict(type='AdamW', lr=5e-4, weight_decay=0.05, eps=1e-6, betas=(0.9, 0.999))
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')
 optimizer_config = dict(grad_clip=None)
 
 # learning policy
-lr_config = dict(policy='CosineAnnealing', min_lr=0.)
+lr_config = dict(policy='CosineAnnealing', min_lr=5e-4)
 
 # runtime settings
 runner = dict(type='EpochBasedRunner', max_epochs=600)

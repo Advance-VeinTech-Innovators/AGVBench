@@ -38,14 +38,14 @@ custom_hooks = [
 ]
 
 # optimizer
-optimizer = dict(type='SGD', lr=0.01, momentum=0.9, weight_decay=0.0001)
+optimizer = dict(type='SGD', lr=5e-4, momentum=0.9, weight_decay=0.05)
 
 # use_fp16=True
 # fp16 = dict(type='mmcv', loss_scale='dynamic')
 optimizer_config = dict(grad_clip=None)
 
 # learning policy
-lr_config = dict(policy='CosineAnnealing', min_lr=0.)
+lr_config = dict(policy='CosineAnnealing', min_lr=5e-4)
 
 # runtime settings
 runner = dict(type='EpochBasedRunner', max_epochs=300)

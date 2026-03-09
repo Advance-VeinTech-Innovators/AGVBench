@@ -81,6 +81,8 @@ def starmixplus(img: torch.Tensor,
                 lam=None,
                 k=4,
                 sigma=30.0,
+                is_vit=False,
+                scale=16,
                 dist_mode: bool = False,
                 auto_scale_sigma: bool = True,
                 **kwargs) -> Tuple[torch.Tensor, Tuple]:
@@ -94,6 +96,8 @@ def starmixplus(img: torch.Tensor,
         lam: Mixing ratio
         k: Number of selected top-K gradient points
         sigma: Standard deviation of Gaussian kernel, controlling the smoothness of the mask
+        is_vit: Whether to use ViT mode (generate mask at lower resolution and upscale)
+        scale: Scale factor for ViT mode (default: 16)
         dist_mode: Whether to use distributed mode
         auto_scale_sigma: Whether to automatically scale sigma based on image size (default: True)
         **kwargs: Other parameters
@@ -103,7 +107,7 @@ def starmixplus(img: torch.Tensor,
         (y_a, y_b, lam): Label and mixing ratio
     """
 
-    def create_point_masks(features: torch.Tensor, k: int = 4, sigma: float = 9.0, lam: float = 0.0, auto_scale: bool = True) -> torch.Tensor:
+    def create_point_masks(features: torch.Tensor, k: int = 4, sigma: float = 9.0, lam: float = 0.0, auto_scale: bool = True, is_vit: bool = False, scale: int = 16) -> torch.Tensor:
         """Create a set of masks based on the Top-K gradient points
         
         Args:
@@ -112,6 +116,8 @@ def starmixplus(img: torch.Tensor,
             sigma: Standard deviation of Gaussian kernel
             lam: Mixing ratio parameter
             auto_scale: Whether to auto-scale sigma based on image size
+            is_vit: Whether to use ViT mode (generate mask at lower resolution)
+            scale: Scale factor for ViT mode
         
         Returns:
             Normalized mask [B, 1, H, W]
@@ -126,8 +132,21 @@ def starmixplus(img: torch.Tensor,
         
         device = features.device
         
-        # Get the Top-K gradient points
-        top_k_coords, _ = select_top_k_points(features, k)
+        # For ViT mode, generate mask at lower resolution
+        if is_vit:
+            h_ = int(height // scale)
+            w_ = int(width // scale)
+            # Scale down the coordinates for lower resolution
+            features_down = F.interpolate(features.unsqueeze(1) if features.dim() == 3 else features, 
+                                         size=(h_, w_), mode='bilinear', align_corners=False)
+            if features_down.dim() == 4:
+                features_down = features_down.squeeze(1)
+            # Get the Top-K gradient points at lower resolution
+            top_k_coords, _ = select_top_k_points(features_down, k)
+        else:
+            # Get the Top-K gradient points at original resolution
+            top_k_coords, _ = select_top_k_points(features, k)
+            h_, w_ = height, width
         
         # Generate a smooth mask for each point
         batch_masks = []
@@ -136,7 +155,7 @@ def starmixplus(img: torch.Tensor,
             for i in range(k):
                 _x = top_k_coords[b, i, 0].item()
                 _y = top_k_coords[b, i, 1].item()
-                point_mask = generate_smooth_mask(_x, _y, height, width, sigma, lam, device, auto_scale)
+                point_mask = generate_smooth_mask(_x, _y, h_, w_, sigma, lam, device, auto_scale)
                 point_masks.append(point_mask)
             
             # Sum all the masks
@@ -146,7 +165,13 @@ def starmixplus(img: torch.Tensor,
             
             batch_masks.append(combined_mask)
         
-        return torch.stack(batch_masks).unsqueeze(1)  # [B, 1, H, W]
+        mask = torch.stack(batch_masks).unsqueeze(1)  # [B, 1, H_, W_]
+        
+        # For ViT mode, interpolate mask to original resolution
+        if is_vit:
+            mask = F.interpolate(mask, size=(height, width), mode='nearest')
+        
+        return mask  # [B, 1, H, W]
 
 
     if lam is None:
@@ -163,7 +188,7 @@ def starmixplus(img: torch.Tensor,
             img = img[:, 0, ...].contiguous()
         y_a, y_b = gt_label, gt_label[rand_index]
     
-        mask = create_point_masks(features, k=k, sigma=sigma, lam=lam, auto_scale=auto_scale_sigma)
+        mask = create_point_masks(features, k=k, sigma=sigma, lam=lam, auto_scale=auto_scale_sigma, is_vit=is_vit, scale=scale)
     
     if mask.shape[-2:] != img.shape[-2:]:
         mask = F.interpolate(mask, size=img.shape[-2:], mode='bilinear', align_corners=False)

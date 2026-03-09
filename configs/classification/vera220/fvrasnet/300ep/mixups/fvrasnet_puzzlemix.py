@@ -1,8 +1,8 @@
 _base_ = "../fvrasnet_mixups_sz224_bs32.py"
 
 model = dict(
-    alpha=2.0,
-    mix_mode="puzzlemix"
+    alpha=1.0,
+    mix_mode="mixup"
 )
 
 # runtime settings

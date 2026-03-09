@@ -113,28 +113,13 @@ data
 *.log.json
 work_dirs/
 /agvbench/.mim
-tools/exp_bash/
+tools/dataset_process
 pretrains
-configs/classification/settings/
+configs/classification/_starlknet_ok
+configs/classification/_metaformer
 
-# Pytorch
 *.pth
-
 *.swp
-source.sh
-tensorboard.sh
 .DS_Store
-replace.sh
-benchmarks/detection/datasets
-benchmarks/detection/output
-
-# temp ignore path during updating:
-configs_EXP
-configs/classification/imagenet100
-configs/classification_IP89
-configs/selfsup_IP89
 *.json
 *.toml
-agvbench/models/classifiers/backup
-work_dirs_EXP
-configs/regression_IP89

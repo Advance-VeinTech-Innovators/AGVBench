@@ -65,7 +65,7 @@ def parse_args():
         '--dataset',
         type=str,
         default='tju600',     # dataset name
-        choices=['tju600', 'vear220', 'casia200', 'hkpu500']
+        choices=['tju600', 'vear220', 'casia200', 'hkpu500', 'scut834'],
         help='name of datasets')
     parser.add_argument(
         '--work_dir',
@@ -119,7 +119,7 @@ def main():
     # work_dir is determined in this priority: CLI > segment in file > filename
     if args.work_dir is not None:
         # update configs according to CLI args if args.work_dir is not None
-        cfg.work_dir = os.join(args.work_dir, args.datset)
+        cfg.work_dir = osp.join(args.work_dir, args.dataset)
     elif cfg.get('work_dir', None) is None:
         # use config filename as default work_dir if cfg.work_dir is None
         work_type = args.config.split('/')[1]
@@ -144,17 +144,37 @@ def main():
 
     # create work_dir
     parts = args.checkpoint.split('/')
+    # Find epoch index - look for 'epoch' in filename or '300e'/'600e' patterns
+    ep_idx = None
     for i in range(len(parts)):
-        if '300e' in parts[i] or '600e' in parts[i]:
+        if 'epoch' in parts[i].lower() or '300e' in parts[i] or '600e' in parts[i]:
             ep_idx = i
-    sub_dir = f"{parts[ep_idx - 1]}/{parts[ep_idx]}/{parts[-2]}"
-    npy_dir = osp.join(args.work_dir, sub_dir)
-    log_dir = osp.join(cfg.work_dir, parts[ep_idx - 1])
+            break
+    
+    # If not found, assume last part is the epoch file
+    if ep_idx is None:
+        ep_idx = len(parts) - 1
+    
+    # Extract model type (usually parts[-3]) and config name (usually parts[-2])
+    # For paths like: .../vera220/{model_type}/{config_name}/epoch_600.pth
+    model_type = parts[-3] if len(parts) >= 3 else parts[ep_idx - 1] if ep_idx > 0 else 'unknown'
+    config_name = parts[-2] if len(parts) >= 2 else 'unknown'
+    epoch_file = parts[-1] if len(parts) >= 1 else 'unknown'
+    
+    # Extract epoch name from epoch_file (e.g., epoch_600.pth -> epoch_600)
+    epoch_name = epoch_file.replace('.pth', '') if epoch_file.endswith('.pth') else epoch_file
+    
+    # Create directory structure for log files: {dataset}/{model_type}/
+    log_dir = osp.join(args.work_dir, args.dataset, model_type)
     mmcv.mkdir_or_exist(osp.abspath(log_dir))
+    
+    # Create directory structure for npy files: {dataset}/{model_type}/{configs}/{epochs}
+    npy_dir = osp.join(args.work_dir, args.dataset, model_type, config_name, epoch_name)
+    mmcv.mkdir_or_exist(osp.abspath(npy_dir))
 
     # logger
     timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    log_file = osp.join(log_dir, f'eer_{parts[loca_index]}_{parts[-2]}.log')
+    log_file = osp.join(log_dir, f'eer_{epoch_name}_{config_name}.log')
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
 
     # build the dataloader

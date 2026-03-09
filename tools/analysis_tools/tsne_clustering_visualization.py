@@ -329,9 +329,9 @@ def parse_args():
                         help='the path of saved results')
     parser.add_argument('--n_clusters', type=int, default=100,
                         help='the number of clusters')
-    parser.add_argument('--max_samples', type=int, default=5000,
+    parser.add_argument('--max_samples', type=int, default=10000,
                         help='the max samples of visulization')
-    parser.add_argument('--perplexity', type=int, default=30,
+    parser.add_argument('--perplexity', type=int, default=50,
                         help='set the hypermeter of t-SNE perplexity')
     parser.add_argument('--gpu-id', type=int, default=0,
                         help='GPU ID')

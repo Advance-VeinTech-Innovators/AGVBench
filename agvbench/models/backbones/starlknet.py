@@ -461,14 +461,14 @@ class StarLKNet(BaseBackbone):
             large_kernel_sizes=[27, 27, 27, 13],
             layers=[2, 2, 18, 2],
             channels=[64, 128, 256, 512],
-            small_kernel=None,
+            small_kernel=3,
             dilation_ratio=[1, 3]),
         'tiny':
         dict(
             large_kernel_sizes=[27, 27, 27, 13],
             layers=[2, 2, 10, 2],
             channels=[32, 64, 128, 256],
-            small_kernel=None,
+            small_kernel=3,
             dilation_ratio=[1, 3]),
     }
 
