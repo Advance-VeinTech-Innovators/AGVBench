@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+- **2026.03.09** Support new bash for evaluations.
 - **2026.01.19** Support **"RSNet"[[IEEE TIFS 2025]](https://ieeexplore.ieee.org/abstract/document/10896759)** and **"WTxGRN"[[IEEE TIFS 2025]](https://ieeexplore.ieee.org/abstract/document/11095785)**.
 - **2025.12.12** Fixed bugs of EER and StarMix. Added config files of StarLKNet, AMPVNet and FVRASNet.
 - **2025.07.15** We supported a vein-specific augmentation method, **"MAdAugment"[[IEEE TIM 2024]](https://xplorestaging.ieee.org/document/10530126)**.
@@ -154,7 +155,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
 
 ---
 
-Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), Haiyang Li ([@OceanLee66](https://github.com/OceanLee66)), Jing Chen, Yuming Fu, Hongyu Zhu and Hongchao Liao.
+Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)).
 
 ### 😉 Citation
 **🤗 If you feel that our work has contributed to your research, please cite it. Thanks.**  
