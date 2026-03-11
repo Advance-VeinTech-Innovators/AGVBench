@@ -19,6 +19,7 @@
 ____
 
 ### 💥 News
+- **2026.03.11** Support some Label Enhancement methods.
 - **2026.03.09** Support new bash for evaluations.
 - **2026.01.19** Support **"RSNet"[[IEEE TIFS 2025]](https://ieeexplore.ieee.org/abstract/document/10896759)** and **"WTxGRN"[[IEEE TIFS 2025]](https://ieeexplore.ieee.org/abstract/document/11095785)**.
 - **2025.12.12** Fixed bugs of EER and StarMix. Added config files of StarLKNet, AMPVNet and FVRASNet.
@@ -95,11 +96,11 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
     2. [ ] Diffusion Model
 - **Label-level**
   - [x] Label Smooth
-  - [ ] Fuzzy C-Means
-  - [ ] Label Propagation
-  - [ ] Mainifold Learning
-  - [ ] Label Distribution
-  - [ ] Token Labeling
+  - [x] Bootstrapping
+  - [x] Confidence Penalty
+  - [x] Temperature Smooth
+  - [x] Dirichlet Label Smooth
+  - [x] Online Label Smooth
 - **Specific-level**
   1. [x] StarMix
   2. [x] MixedAA
@@ -186,16 +187,6 @@ ___
 | ❌ **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
 | ✅ **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充；|
 | ✅ **多方法混合增益**|增加 Augmentation Interaction Study, e.g., `Mixup + GridMask works best for CNN`|
-
-
-### Label Enhancement Methods
-| 维度          |  FCM  |  LP  | Manifold |     LS     |
-| ------------- | ---- | ---- | --------- | ---------- |
-| 是否依赖标签   | ❌   | ✅  | 可选       | ✅        |
-| 是否依赖邻接图 | ❌   | ✅  | ✅        | ❌        |
-| 是否全局一致性 | ✅   | ✅  | ❌（局部） | ✅        |
-| 是否适合半监督 | ✅   | ✅  | ✅        | ⛔（需GT） |
-
 ___
 
 
