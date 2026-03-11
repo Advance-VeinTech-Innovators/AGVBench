@@ -104,7 +104,6 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   1. [x] StarMix
   2. [x] MixedAA
   3. [x] Explainable AI (**Somthing wrong with this method, they can't training normal, I don't konw why happend this.**)
-  4. [ ] MTPV
 
 ### 📊 2. Experiments Settings
 
@@ -116,18 +115,19 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   | VERA220   | 2,200      | 220     | 1,100/1,100    | [VERA220](https://www.idiap.ch/en/scientific-research/data/vera-palmvein)         |
   | CASIA200  | 1,200      | 200     | 600/600        | [CASIA](http://www.cbsr.ia.ac.cn/english/MS_PalmprintDatabases.asp)         |
   | HKPU500   | 6,000      | 500     | 3,000/3,000    | [HKPU500](https://www4.comp.polyu.edu.hk/~cslzhang/paper/TIM_10_Feb.pdf)         |
+  | SCUT834   | 8,340      | 834     | 4,170/4,170    | [SCUT834] |
   
-  We could build a ``Corrpution dataset/policy`` for the test set like ``CIFAR100-C/ImageNet-C``
+  We build a ``Corrpution dataset/policy`` for the test set like ``CIFAR100-C/ImageNet-C``
 - **Backbone**
   - CNNs
     - [x] ResNet18/ResNet50: Classic backbone
-    - [x] MobileNet v2: Effeicent backbone for mobile devices
+    - [x] MobileNet v2: Efficient backbone for mobile devices
     - [x] StarLKNet: Large kernel backbone
     - [x] FVRASNet/AMPVNet: Specific design backbone for vein
   - ViTs
-    - [x] DeiT (tiny, small, base)
-    - [x] ViT (small, base, large)
-    - [x] Swin (tiny, small, base)
+    - [x] DeiT (tiny, small)
+    - [x] ViT (small)
+    - [x] Swin (tiny, small)
 - **Settings**
 
   We resize the size of image to 3x224x224...
@@ -135,7 +135,7 @@ We divided the augmentations into three types: ``Sample-level``, ``Label-level``
   | Optimizer | Batch Size | LR     | Scheduler     | Hyperparameters            |
   | --------- | ---------- | ------ | -------------- | ------------------------- |
   | SGD       | 32         | `0.01` | ✅ Cosine     | momentum=0.9, wd=1e-4      |
-  | AdamW     | 32         | `3e-4` | ✅ Cosine     | betas=(0.9, 0.98), wd=1e-2 |
+  | AdamW     | 32         | `1e-3` | ✅ Cosine     | betas=(0.9, 0.999), wd=1e-2 |
 
 - **Experiments**
   - [x] 📉 Classification
@@ -181,11 +181,11 @@ ___
 
 | 模块 | 建议 |
 | --- | ---- |
-| **Label-level 增强模块** | 可以考虑明确每种标签增强的输入需求。例如 FCM/LP/Manifold 依赖 feature embedding，建议加一句：`requires extracted features from pretrained encoder.` |
-| **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
-| **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
-| **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充；
-|
+| ⚠️ **Label-level 增强模块** | 可以考虑明确每种标签增强的输入需求。例如 FCM/LP/Manifold 依赖 feature embedding，建议加一句：`requires extracted features from pretrained encoder.` |
+| ✅ **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
+| ❌ **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
+| ✅ **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充；|
+| ✅ **多方法混合增益**|增加 Augmentation Interaction Study, e.g., `Mixup + GridMask works best for CNN`|
 
 
 ### Label Enhancement Methods
@@ -217,23 +217,35 @@ ___
 1. **Abstract**
 2. **Introduction**
 3. **Related Work**
+  - Data Augmentation in Computer Vision
+  - Data Augmentation in Biometrics
+  - Benchmarking Data Augmentation
 4. **Overview of AGVBench**
-     1. **Problem Formulation**
-     2. **Method Taxonomy: Sample-Level, Label-Level, Specific-Level**
+  - Problem Formulation
+  - Augmentation Taxonomy
+    1. Single Image Augmentation
+    2. Multi Image Augmentation
+    3. Label-Level Augmentation
+  - Evaluation Protocol
 5. **Experimental Setup**
-     1. **Datasets and Preprocessing**
-     2. **Model Architectures**
-     3. **Training Protocols**
-6. **Systematic Evaluation of Augmentation Strategies**
-     1. **Classification**
-     2. **EER**
-     3. **Corruption**
-     4. **FGSM, PGD**
-     5. **PSNR, SSIM**
-7. **Analysis and Visualization**
-     1. **Occlusion Robustness**
-     2. **Calibration**
-     3. **ROC**
-     4. **t-SNE & CAM**
-8. **Ablation and Discussions**
-9.  **Conclusion and Future Work**
+     1. Datasets
+     2. Model Architectures
+     3. Implementations
+6. **Results of Augmentation Strategies**
+  - Recognition Performance
+     1. Classification
+     2. EER
+  - Robustness
+     3. Calibration
+     2. Corruption
+     4. Adversarial Attack (FGSM, PGD)
+     5. Image Quality Preservation (PSNR, SSIM)
+  - Efficiency Analysis
+     1. Training overhead & Memory usage & Inference speed
+7. **Analysis and Insights**
+  - Feature Space Visualization
+     1. t-SNE & CAM
+  - Orthogonality of Augmentations
+     1. sample-level + label-level, sample-level + multi-sample
+  - Discussions
+8.  **Conclusion and Future Work**
