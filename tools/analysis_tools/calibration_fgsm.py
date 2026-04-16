@@ -13,7 +13,7 @@ from agvbench.datasets import build_dataloader, build_dataset
 from agvbench.models import build_model
 from agvbench.utils import (get_root_logger, dist_forward_collect, print_log,
                              setup_multi_processes, nondist_forward_collect, traverse_replace,
-                             fgsm_nondist_forward_collect, pgd_nondist_forward_collect)
+                             fgsm_nondist_forward_collect, pgd_nondist_forward_collect, apgd_nondist_forward_collect)
 
 
 def single_gpu_test(model, data_loader):
@@ -24,15 +24,16 @@ def single_gpu_test(model, data_loader):
     return results
 
 
-def adver_attack_test(model, data_loader, head, dataset='cifar', mode="fgsm"):
+def adver_attack_test(model, data_loader, head, dataset='vear220', mode="fgsm"):
     model.eval()
     func = lambda **x: model(mode='test', **x)
     if mode == "fgsm":
-        results = fgsm_nondist_forward_collect(func, data_loader,
-                                            len(data_loader.dataset), head, dataset)
+        results = fgsm_nondist_forward_collect(func, data_loader, len(data_loader.dataset), head, dataset)
     elif mode == "pgd":
-        results = pgd_nondist_forward_collect(func, data_loader,
-                                            len(data_loader.dataset), head, dataset, random_start=True, targeted=False)
+        results = pgd_nondist_forward_collect(func, data_loader, len(data_loader.dataset), head, dataset, random_start=True, targeted=False)
+    elif mode == "auto":
+        results = apgd_nondist_forward_collect(func, data_loader, len(data_loader.dataset), head, dataset, eps=8, steps=100, 
+                                                n_restarts=1, norm='Linf', loss='ce', seed=0, rho=0.75)
     else:
         raise ValueError("Wrong Adversarial Attack method.")
     return results
@@ -71,8 +72,8 @@ def parse_args():
     parser.add_argument(
         '--dataset',
         type=str,
-        default='cifar', # choose head : cifar or imagenet
-        help='choose dataset type in [cifar, imagenet] for the normalization')
+        default='vera220',
+        help='choose dataset type in [vera220, tju600, casia200, etc] for the normalization')
     parser.add_argument(
         '--work_dir',
         type=str,
@@ -175,11 +176,13 @@ def main():
 
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
-        if args.keys == 'fgsm' or 'pgd':
+        if args.keys == 'fgsm' or args.keys == 'pgd' or args.keys == 'auto':
             if args.keys == 'fgsm':
                 print_log("FGSM (Fast Gradient Sign Method) compute adversarial robustness error", logger=logger)
-            else:
+            elif args.keys == 'pgd':
                 print_log("PGD (Projected Gradient Descent) compute adversarial robustness error", logger=logger)
+            elif args.keys == 'auto':
+                print_log("AutoPGD (Automated Adversarial Attack) compute adversarial robustness error", logger=logger)
             outputs = adver_attack_test(model, data_loader, args.head, args.dataset, mode=args.keys)
 
             rank, _ = get_dist_info()

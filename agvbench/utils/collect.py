@@ -3,11 +3,16 @@ import os.path as osp
 import pickle
 import shutil
 import tempfile
+import time
+import math
+import random
 from typing import Optional
 from torch.autograd import Variable
 from einops import rearrange
 
 import torch
+import torch.nn as nn
+import torch.nn.functional as F
 import torch.distributed as dist
 import torchvision.transforms
 from torchvision.utils import save_image
@@ -245,6 +250,9 @@ def occlusion_forward_collect(func, data_loader, length, drop_ratio, drop_size):
     return results_all
 
 
+r""" 
+    FGSM Adversarial Attack
+"""
 def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='vera220'):
 
     eps = 8
@@ -260,6 +268,9 @@ def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='vera2
     elif dataset == 'casia200':
         mean=[0.471, 0.471, 0.471]
         std=[0.067, 0.067, 0.067]
+    elif dataset == 'scut1100':
+        mean=[0.288, 0.288, 0.288]
+        std=[0.264, 0.264, 0.264]
     else: 
         raise ValueError("please chose a valid dataset")
     mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
@@ -294,6 +305,9 @@ def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='vera2
     return results_all
 
 
+r""" 
+    PGD Adversarial Attack
+"""
 def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera220', random_start=True, targeted=False):
 
     eps = 8
@@ -311,6 +325,9 @@ def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera22
     elif dataset == 'casia200':
         mean=[0.471, 0.471, 0.471]
         std=[0.067, 0.067, 0.067]
+    elif dataset == 'scut1100':
+        mean=[0.288, 0.288, 0.288]
+        std=[0.264, 0.264, 0.264]
     else: 
         raise ValueError("please chose a valid dataset")
     mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
@@ -358,5 +375,408 @@ def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera22
     for k in results[0].keys():
         results_all[k] = np.concatenate(
             [batch[k].numpy() for batch in results], axis=0)
+        assert results_all[k].shape[0] == length
+    return results_all
+
+
+r""" 
+    Auto Adversarial Attack
+    Reference: https://github.com/fra31/auto-attack
+"""
+def _l0_norm(x):
+    return (x.abs().view(x.shape[0], -1) > 0).sum(dim=-1)
+
+
+def _l1_norm(x, keepdim=False):
+    out = x.abs().view(x.shape[0], -1).sum(dim=-1)
+    return out.view(-1, 1, 1, 1) if keepdim else out
+
+
+def _l2_norm(x, keepdim=False):
+    out = (x ** 2).view(x.shape[0], -1).sum(dim=-1).sqrt()
+    return out.view(-1, 1, 1, 1) if keepdim else out
+
+
+def _check_zero_gradients(grad, logger=None):
+    # lightweight compatibility with auto-attack; keep silent by default
+    if grad is None:
+        return
+    with torch.no_grad():
+        g = grad.detach()
+        is_zero = (g.abs().view(g.shape[0], -1).sum(dim=-1) == 0)
+        if is_zero.any() and logger is not None:
+            logger.warning(f'found {int(is_zero.sum())} samples with zero gradients')
+
+
+def _l1_projection(x2, y2, eps1):
+    """Projection used by AutoAttack APGD for L1 norm.
+
+    This is adapted from `autoattack/autopgd_base.py` (same math/steps).
+    """
+    x = x2.clone().float().view(x2.shape[0], -1)
+    y = y2.clone().float().view(y2.shape[0], -1)
+    sigma = y.clone().sign()
+    u = torch.min(1 - x - y, x + y)
+    u = torch.min(torch.zeros_like(y), u)
+    l = -torch.clone(y).abs()
+    d = u.clone()
+
+    bs, indbs = torch.sort(-torch.cat((u, l), 1), dim=1)
+    bs2 = torch.cat((bs[:, 1:], torch.zeros(bs.shape[0], 1).to(bs.device)), 1)
+
+    inu = 2 * (indbs < u.shape[1]).float() - 1
+    size1 = inu.cumsum(dim=1)
+
+    s1 = -u.sum(dim=1)
+    c = eps1 - y.clone().abs().sum(dim=1)
+    c5 = s1 + c < 0
+    c2 = c5.nonzero().squeeze(1)
+    s = s1.unsqueeze(-1) + torch.cumsum((bs2 - bs) * size1, dim=1)
+
+    if c2.nelement() != 0:
+        lb = torch.zeros_like(c2).float()
+        ub = torch.ones_like(lb) * (bs.shape[1] - 1)
+        nitermax = torch.ceil(torch.log2(torch.tensor(bs.shape[1]).float()))
+        counter = 0
+        while counter < nitermax:
+            counter4 = torch.floor((lb + ub) / 2.0)
+            counter2 = counter4.type(torch.LongTensor)
+
+            c8 = s[c2, counter2] + c[c2] < 0
+            ind3 = c8.nonzero().squeeze(1)
+            ind32 = (~c8).nonzero().squeeze(1)
+            if ind3.nelement() != 0:
+                lb[ind3] = counter4[ind3]
+            if ind32.nelement() != 0:
+                ub[ind32] = counter4[ind32]
+            counter += 1
+
+        lb2 = lb.long()
+        alpha = (-s[c2, lb2] - c[c2]) / size1[c2, lb2 + 1] + bs2[c2, lb2]
+        d[c2] = -torch.min(torch.max(-u[c2], alpha.unsqueeze(-1)), -l[c2])
+
+    return (sigma * d).view(x2.shape)
+
+
+def _apgd_check_oscillation(x, j, k, device, k3=0.75):
+    t = torch.zeros(x.shape[1], device=device)
+    for counter5 in range(k):
+        t += (x[j - counter5] > x[j - counter5 - 1]).float()
+    return (t <= k * k3 * torch.ones_like(t)).float()
+
+
+def _apgd_normalize(delta, norm, ndims):
+    if norm == 'Linf':
+        t = delta.abs().view(delta.shape[0], -1).max(1)[0]
+    elif norm == 'L2':
+        t = (delta ** 2).view(delta.shape[0], -1).sum(-1).sqrt()
+    elif norm == 'L1':
+        try:
+            t = delta.abs().view(delta.shape[0], -1).sum(dim=-1)
+        except Exception:
+            t = delta.abs().reshape([delta.shape[0], -1]).sum(dim=-1)
+    else:
+        raise ValueError('unknown norm')
+    return delta / (t.view(-1, *([1] * ndims)) + 1e-12)
+
+
+def _apgd_dlr_loss(logits, y):
+    x_sorted, ind_sorted = logits.sort(dim=1)
+    ind = (ind_sorted[:, -1] == y).float()
+    u = torch.arange(logits.shape[0], device=logits.device)
+    return -(logits[u, y] - x_sorted[:, -2] * ind - x_sorted[:, -1] * (1. - ind)) / (
+        x_sorted[:, -1] - x_sorted[:, -3] + 1e-12)
+
+
+def apgd_attack_single_run(predict, x, y, eps, n_iter=100, norm='Linf', loss='ce', eot_iter=1,
+                           rho=0.75, x_init=None, logger=None):
+    """Core APGD single-run attack (evaluation only).
+
+    Adapted from `autoattack/autopgd_base.py: APGDAttack.attack_single_run`.
+    Inputs are pixel-space images in [0,1]. `predict(x)` returns logits.
+    """
+    assert norm in ['Linf', 'L2', 'L1']
+    # assert loss in ['ce', 'dlr', 'ce-targeted-cfts']
+    # TODO: support Cross-Entropy loss only for now
+    assert loss in ['ce']
+
+    device = x.device
+    orig_dim = list(x.shape[1:])
+    ndims = len(orig_dim)
+
+    # checkpoint schedule
+    n_iter_2 = max(int(0.22 * n_iter), 1)
+    n_iter_min = max(int(0.06 * n_iter), 1)
+    size_decr = max(int(0.03 * n_iter), 1)
+
+    if len(x.shape) < ndims:
+        x = x.unsqueeze(0)
+        y = y.unsqueeze(0)
+
+    if norm == 'Linf':
+        t = 2 * torch.rand(x.shape, device=device).detach() - 1
+        x_adv = x + eps * torch.ones_like(x).detach() * _apgd_normalize(t, norm, ndims)
+    elif norm == 'L2':
+        t = torch.randn(x.shape, device=device).detach()
+        x_adv = x + eps * torch.ones_like(x).detach() * _apgd_normalize(t, norm, ndims)
+    else:  # L1
+        t = torch.randn(x.shape, device=device).detach()
+        delta = _l1_projection(x, t, eps)
+        x_adv = x + t + delta
+
+    if x_init is not None:
+        x_adv = x_init.clone()
+
+    x_adv = x_adv.clamp(0.0, 1.0)
+    x_best = x_adv.clone()
+    x_best_adv = x_adv.clone()
+    loss_steps = torch.zeros([n_iter, x.shape[0]], device=device)
+    loss_best_steps = torch.zeros([n_iter + 1, x.shape[0]], device=device)
+
+    if loss == 'ce':
+        criterion_indiv = nn.CrossEntropyLoss(reduction='none')
+    else:
+        raise ValueError("please chose a valid loss")
+    # elif loss == 'ce-targeted-cfts':
+    #     criterion_indiv = lambda xlog, ylab: -1.0 * F.cross_entropy(xlog, ylab, reduction='none')
+    # else:  # dlr
+    #     criterion_indiv = _apgd_dlr_loss
+
+
+    # initial gradient
+    x_adv.requires_grad_()
+    grad = torch.zeros_like(x)
+    for _ in range(eot_iter):
+        with torch.enable_grad():
+            logits = predict(x_adv)
+            loss_indiv = criterion_indiv(logits, y)
+            loss_sum = loss_indiv.sum()
+        grad += torch.autograd.grad(loss_sum, [x_adv])[0].detach()
+    grad /= float(eot_iter)
+    grad_best = grad.clone()
+
+    if loss in ['dlr']:
+        _check_zero_gradients(grad, logger=logger)
+
+    acc = logits.detach().max(1)[1] == y
+    loss_best = loss_indiv.detach().clone()
+
+    alpha = 2.0 if norm in ['Linf', 'L2'] else 1.0
+    step_size = alpha * eps * torch.ones([x.shape[0], *([1] * ndims)], device=device).detach()
+    x_adv_old = x_adv.detach().clone()
+    k = n_iter_2
+    n_fts = math.prod(orig_dim)
+    if norm == 'L1':
+        k = max(int(.04 * n_iter), 1)
+        if x_init is None:
+            topk = .2 * torch.ones([x.shape[0]], device=device)
+            sp_old = n_fts * torch.ones_like(topk)
+        else:
+            topk = _l0_norm(x_adv - x) / n_fts / 1.5
+            sp_old = _l0_norm(x_adv - x)
+        adasp_redstep = 1.5
+        adasp_minstep = 10.0
+    counter3 = 0
+
+    loss_best_last_check = loss_best.clone()
+    reduced_last_check = torch.ones_like(loss_best)
+    u = torch.arange(x.shape[0], device=device)
+
+    for i in range(n_iter):
+        with torch.no_grad():
+            x_adv = x_adv.detach()
+            grad2 = x_adv - x_adv_old
+            x_adv_old = x_adv.clone()
+            a = 0.75 if i > 0 else 1.0
+
+            if norm == 'Linf':
+                x_adv_1 = x_adv + step_size * torch.sign(grad)
+                x_adv_1 = torch.clamp(torch.min(torch.max(x_adv_1, x - eps), x + eps), 0.0, 1.0)
+                x_adv_1 = torch.clamp(torch.min(torch.max(
+                    x_adv + (x_adv_1 - x_adv) * a + grad2 * (1 - a), x - eps), x + eps), 0.0, 1.0)
+            elif norm == 'L2':
+                x_adv_1 = x_adv + step_size * _apgd_normalize(grad, norm, ndims)
+                x_adv_1 = torch.clamp(
+                    x + _apgd_normalize(x_adv_1 - x, norm, ndims) * torch.min(
+                        eps * torch.ones_like(x).detach(),
+                        _l2_norm(x_adv_1 - x, keepdim=True)), 0.0, 1.0)
+                x_adv_1 = x_adv + (x_adv_1 - x_adv) * a + grad2 * (1 - a)
+                x_adv_1 = torch.clamp(
+                    x + _apgd_normalize(x_adv_1 - x, norm, ndims) * torch.min(
+                        eps * torch.ones_like(x).detach(),
+                        _l2_norm(x_adv_1 - x, keepdim=True)), 0.0, 1.0)
+            else:  # L1
+                grad_topk = grad.abs().view(x.shape[0], -1).sort(-1)[0]
+                topk_curr = torch.clamp((1. - topk) * n_fts, min=0, max=n_fts - 1).long()
+                grad_topk = grad_topk[u, topk_curr].view(-1, *[1] * (len(x.shape) - 1))
+                sparsegrad = grad * (grad.abs() >= grad_topk).float()
+                x_adv_1 = x_adv + step_size * sparsegrad.sign() / (_l1_norm(sparsegrad.sign(), keepdim=True) + 1e-10)
+                delta_u = x_adv_1 - x
+                delta_p = _l1_projection(x, delta_u, eps)
+                x_adv_1 = x + delta_u + delta_p
+
+            x_adv = x_adv_1 + 0.0
+
+        x_adv.requires_grad_()
+        grad = torch.zeros_like(x)
+        for _ in range(eot_iter):
+            with torch.enable_grad():
+                logits = predict(x_adv)
+                loss_indiv = criterion_indiv(logits, y)
+                loss_sum = loss_indiv.sum()
+            grad += torch.autograd.grad(loss_sum, [x_adv])[0].detach()
+        grad /= float(eot_iter)
+
+        pred = logits.detach().max(1)[1] == y
+        acc = torch.min(acc, pred)
+        ind_pred = (pred == 0).nonzero().squeeze()
+        if ind_pred.numel() != 0:
+            x_best_adv[ind_pred] = x_adv[ind_pred] + 0.0
+
+        with torch.no_grad():
+            y1 = loss_indiv.detach().clone()
+            loss_steps[i] = y1 + 0
+            ind = (y1 > loss_best).nonzero().squeeze()
+            if ind.numel() != 0:
+                x_best[ind] = x_adv[ind].clone()
+                grad_best[ind] = grad[ind].clone()
+                loss_best[ind] = y1[ind] + 0
+            loss_best_steps[i + 1] = loss_best + 0
+
+            counter3 += 1
+            if counter3 == k:
+                if norm in ['Linf', 'L2']:
+                    fl_oscillation = _apgd_check_oscillation(loss_steps, i, k, device=device, k3=rho)
+                    fl_reduce_no_impr = (1. - reduced_last_check) * (loss_best_last_check >= loss_best).float()
+                    fl_oscillation = torch.max(fl_oscillation, fl_reduce_no_impr)
+                    reduced_last_check = fl_oscillation.clone()
+                    loss_best_last_check = loss_best.clone()
+
+                    if fl_oscillation.sum() > 0:
+                        ind_fl_osc = (fl_oscillation > 0).nonzero().squeeze()
+                        step_size[ind_fl_osc] /= 2.0
+                        x_adv[ind_fl_osc] = x_best[ind_fl_osc].clone()
+                        grad[ind_fl_osc] = grad_best[ind_fl_osc].clone()
+
+                    k = max(k - size_decr, n_iter_min)
+                else:  # L1
+                    sp_curr = _l0_norm(x_best - x)
+                    fl_redtopk = (sp_curr / sp_old) < .95
+                    topk = sp_curr / n_fts / 1.5
+                    step_size[fl_redtopk] = alpha * eps
+                    step_size[~fl_redtopk] /= adasp_redstep
+                    step_size.clamp_(alpha * eps / adasp_minstep, alpha * eps)
+                    sp_old = sp_curr.clone()
+                    x_adv[fl_redtopk] = x_best[fl_redtopk].clone()
+                    grad[fl_redtopk] = grad_best[fl_redtopk].clone()
+
+                counter3 = 0
+
+    return x_best_adv.detach()
+
+
+def apgd_perturb(predict, x, y, eps, n_iter=100, n_restarts=1, norm='Linf', loss='ce', eot_iter=1,
+                 rho=0.75, seed=0, x_init=None, logger=None):
+    """APGD multi-restart wrapper (evaluation only).
+
+    Adapted from `autoattack/autopgd_base.py: APGDAttack.perturb` (non-targeted).
+    Returns adversarial examples in [0,1].
+    """
+    device = x.device
+    x = x.detach().clone().float().to(device)
+    y = y.detach().clone().long().to(device)
+
+    with torch.no_grad():
+        y_pred = predict(x).max(1)[1]
+    acc = y_pred == y
+    adv = x.clone()
+
+    torch.random.manual_seed(int(seed))
+    if torch.cuda.is_available():
+        torch.cuda.random.manual_seed(int(seed))
+
+    for _ in range(int(n_restarts)):
+        ind_to_fool = acc.nonzero().squeeze()
+        if len(ind_to_fool.shape) == 0:
+            ind_to_fool = ind_to_fool.unsqueeze(0)
+        if ind_to_fool.numel() == 0:
+            break
+
+        x_to_fool = x[ind_to_fool].clone()
+        y_to_fool = y[ind_to_fool].clone()
+        adv_curr = apgd_attack_single_run(
+            predict=predict, x=x_to_fool, y=y_to_fool, eps=eps,
+            n_iter=n_iter, norm=norm, loss=loss, eot_iter=eot_iter,
+            rho=rho, x_init=x_init, logger=logger,
+        )
+
+        with torch.no_grad():
+            is_adv = predict(adv_curr).max(1)[1] != y_to_fool
+            if is_adv.any():
+                adv[ind_to_fool[is_adv]] = adv_curr[is_adv]
+                acc[ind_to_fool[is_adv]] = 0
+
+    return adv
+
+
+def apgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera220', eps=8,
+                                steps=100, n_restarts=1, norm='Linf', loss='ce', seed=0, rho=0.75):
+    """AutoPGD(APGD) adversarial forward & collect (non-distributed).
+
+    `eps` follows existing FGSM/PGD convention (pixel-space, divided by 255).
+    """
+    if dataset == 'vera220':
+        mean = [0.4399, 0.4399, 0.4399]
+        std = [0.114, 0.114, 0.114]
+    elif dataset == 'tju600':
+        mean = [0.382, 0.382, 0.382]
+        std = [0.088, 0.088, 0.088]
+    elif dataset == 'hkpu500':
+        mean = [0.556, 0.556, 0.556]
+        std = [0.047, 0.047, 0.047]
+    elif dataset == 'casia200':
+        mean = [0.471, 0.471, 0.471]
+        std = [0.067, 0.067, 0.067]
+    elif dataset == 'scut1100':
+        mean = [0.288, 0.288, 0.288]
+        std = [0.264, 0.264, 0.264]
+    else:
+        raise ValueError("please chose a valid dataset")
+
+    mean_t = torch.tensor(mean).view(1, -1, 1, 1)
+    std_t = torch.tensor(std).view(1, -1, 1, 1)
+    eps_f = float(eps) / 255.0
+
+    results = []
+    prog_bar = mmcv.ProgressBar(len(data_loader))
+    for _, data in enumerate(data_loader):
+        img_norm = data['img']
+        y = data['gt_label']
+        device = img_norm.device
+        mean = mean_t.to(device=device, dtype=img_norm.dtype)
+        std = std_t.to(device=device, dtype=img_norm.dtype)
+
+        # denorm to pixel space [0,1]
+        x = (img_norm * std + mean).clamp(0.0, 1.0)
+
+        def predict(x_pixel):
+            x_in = (x_pixel - mean) / std
+            data_adv = dict(data)
+            data_adv['img'] = x_in
+            out = func(**data_adv)
+            return out[head]
+
+        x_adv = apgd_perturb(predict=predict, x=x, y=y, eps=eps_f, n_iter=steps, n_restarts=n_restarts,
+            norm=norm, loss=loss, eot_iter=1, rho=rho, seed=seed, x_init=None, logger=None,)
+        data['img'] = ((x_adv - mean) / std).detach()
+
+        with torch.no_grad():
+            result = func(**data)
+        results.append(result)
+        prog_bar.update()
+
+    results_all = {}
+    for k in results[0].keys():
+        results_all[k] = np.concatenate([batch[k].numpy() for batch in results], axis=0)
         assert results_all[k].shape[0] == length
     return results_all

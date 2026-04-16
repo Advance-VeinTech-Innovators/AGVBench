@@ -1,10 +1,10 @@
 # dataset settings
 data_source_cfg = dict(type='ImageNet')
 # ImageNet dataset
-data_train_list = 'data/meta/tju600/train.txt'
-data_train_root = 'data/tju600/train/'
-data_test_list = 'data/meta/tju600/test.txt'
-data_test_root = 'data/tju600/test/'
+data_train_list = 'data/meta/scut1100/train.txt'
+data_train_root = 'data/scut1100/train/'
+data_test_list = 'data/meta/scut1100/test.txt'
+data_test_root = 'data/scut1100/test/'
 
 dataset_type = 'ClassificationDataset'
 img_norm_cfg = dict(mean=[0.382, 0.382, 0.382], std=[0.088, 0.088, 0.088])

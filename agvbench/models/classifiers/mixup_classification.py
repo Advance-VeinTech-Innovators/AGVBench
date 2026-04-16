@@ -113,7 +113,6 @@ class MixUpClassification(BaseModel):
             guidedmix=dict(guided_type='ap', condition='greedy', distance_metric='l2', size=(7, 7), sigma=(3, 3)),
             snapmix=dict(),
             resizemix=dict(scope=(0.1, 0.8), use_alpha=False),
-            starmix=dict(),
             saliencymix=dict(),
             samix=dict(mask_adjust=0, lam_margin=0.08),
             smoothmix=dict(),
@@ -123,7 +122,8 @@ class MixUpClassification(BaseModel):
             smmix=dict(side=14, min_side_ratio=0.25, max_side_ratio=0.75),
             tla=dict(),
             vanilla=dict(),
-            starmixplus=dict(k=4, sigma=30.0, auto_scale_sigma=True),
+            starmix=dict(is_vit=False, scale=16, threshold=0.3),
+            starmixplus=dict(is_vit=False, scale=16, k=4, sigma=30.0, auto_scale_sigma=True),
         )
         _supported_mode = ["vanilla"] + list(self.dynamic_mode.keys()) + list(self.static_mode.keys())
         for _mode in _supported_mode:

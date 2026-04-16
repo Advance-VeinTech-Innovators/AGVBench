@@ -12,6 +12,7 @@ def starmix(img,
             lam=None,
             is_vit=False,
             scale=16,
+            threshold=0.3,
             vis_mask=False,
             dist_mode=False,
             return_mask=False,
@@ -37,6 +38,7 @@ def starmix(img,
                     gaussian_kernel(h, h, w, sigma2), 
                     gaussian_kernel(h, h * 2, w * 2, sigma1)
                 ]
+        masks = [mask > 0.5 for mask in masks]
 
         return (sum(masks) / 3).sigmoid() * lam
 
@@ -57,7 +59,7 @@ def starmix(img,
         b, _, h, w = img.size()
         y_a, y_b = gt_label, gt_label[rand_index]
 
-        if 0.3 <= lam <= 0.7:
+        if threshold <= lam <= 1 - threshold:
             if is_vit:
                 h_, w_ = int(h // scale), int(w // scale)
                 mask = x_mask(lam, h_, w_)

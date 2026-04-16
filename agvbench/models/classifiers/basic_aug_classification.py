@@ -188,12 +188,16 @@ class BasicAugClassification(BaseModel):
                                                             return_mask=return_mask, **self.aug_args[cur_mode])
         elif cur_mode in ["softaugment", "keepaugment"]:
             if cur_mode == 'softaugment':
-                img = self.policy_mode[cur_mode](img, **self.aug_args[cur_mode])
+                img, _ = self.policy_mode[cur_mode](img, **self.aug_args[cur_mode])
             elif cur_mode == 'keepaugment':
-                pred_raw = self.backbone(img)[0].clone().detach()
+                out  - self.backbone(img)[0]
+                if isinstance(out, list):
+                    out = out[0]
+                pred_raw = out.clone().detach()
                 img = self.policy_mode[cur_mode](img, gt_label, pred_raw, **self.aug_args[cur_mode])
         else:
             assert cur_mode == "vanilla"
+
         x = self.backbone(img)
 
         # augmentation loss

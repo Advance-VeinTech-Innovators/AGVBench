@@ -231,10 +231,19 @@ def draw_roc(categorized_files, colors, name='none', model_len=1, smooth=False, 
     plt.xlim(0.001 * 2.5, 1)
     plt.xscale('log')
     plt.xticks([0.001, 0.01, 0.1, 1])
+<<<<<<< HEAD
     plt.ylim(0.8, 1.01)
     plt.yticks([0.8, 0.85, 0.9, 0.95, 1.01])
     # plt.ylim(0.94, 1.01)
     # plt.yticks([0.94, 0.955, 0.97, 0.985, 1.01])
+=======
+    # plt.ylim(0.8, 1.01)
+    # plt.yticks([0.8, 0.85, 0.9, 0.95, 1.01])
+    plt.ylim(0.6, 1.01)
+    plt.yticks([0.6, 0.7, 0.8, 0.9, 1.01])
+    # plt.ylim(0.94, 1.01)
+    # plt.yticks([0.94, 0.95, 0.96, 0.97, 0.98, 1.01])
+>>>>>>> 2c9c757 (updates)
 
     alpha_band = 0.1
 

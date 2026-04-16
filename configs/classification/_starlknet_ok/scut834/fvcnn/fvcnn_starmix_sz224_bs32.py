@@ -1,0 +1,48 @@
+_base_ = [
+    '../../../_base_/scut834/sz224_bs32_vanilla.py',
+    '../../../_base_/default_runtime.py',
+]
+
+# model settings
+model = dict(
+    type='MixUpClassification',
+    alpha=1.0,
+    mix_mode="starmix",
+    mix_args=dict(
+        augmix=dict(mixture_depth=-1, mixture_width=3, severity=1),
+        fmix=dict(decay_power=3, size=(224,224), max_soft=0., reformulate=False),
+        gridmix=dict(n_holes=(2, 6), hole_aspect_ratio=1.,
+            cut_area_ratio=(0.5, 1), cut_aspect_ratio=(0.5, 2)),
+        manifoldmix=dict(layer=(0, 3)),
+        puzzlemix=dict(transport=True, t_batch_size=32, t_size=-1,  # adjust t_batch_size if CUDA out of memory
+            mp=None, block_num=4,  # block_num<=4 and mp=2/4 for fast training
+            beta=1.2, gamma=0.5, eta=0.2, neigh_size=4, n_labels=3, t_eps=0.8),
+        resizemix=dict(scope=(0.1, 0.8), use_alpha=True),
+        starmix=dict(),
+    ),
+    backbone=dict(
+        type='FVCNN',
+        out_indices=(2,),
+    ),
+    head=dict(
+        type='ClsHead',
+        loss=dict(type='CrossEntropyLoss', use_soft=False, use_sigmoid=False, loss_weight=1.0),
+        with_avg_pool=True,
+        multi_label=False,
+        in_channels=500,
+        num_classes=834)
+)
+
+
+# optimizer
+optimizer = dict(type='AdamW', lr=0.001, weight_decay=0.01, eps=1e-06, betas=(0.9, 0.999))
+
+# use_fp16=True
+# fp16 = dict(type='mmcv', loss_scale='dynamic')
+optimizer_config = dict(grad_clip=None)
+
+# learning policy
+lr_config = dict(policy='CosineAnnealing', min_lr=0.)
+
+# runtime settings
+runner = dict(type='EpochBasedRunner', max_epochs=600)

@@ -25,8 +25,8 @@ class MAdAugBlock(BaseModule):
                  init_cfg=None,
                  **kwargs):
         super(MAdAugBlock, self).__init__(init_cfg)
-        self.p_aug = PolicyNetwork(in_channels=in_channels, noise_std=noise_std, num_classes=num_classes)
-        self.n_aug = NeuralAugmenter(n_subpolicies=subpolicies, threshold=threshold)
+        self.p_aug = PolicyNetwork(n_subpolicies=subpolicies, threshold=threshold )
+        self.n_aug = NeuralAugmenter(in_channels=in_channels, noise_std=noise_std, num_classes=num_classes)
 
         self.init_weights()
 
