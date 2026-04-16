@@ -65,11 +65,7 @@ def parse_args():
         '--dataset',
         type=str,
         default='tju600',     # dataset name
-<<<<<<< HEAD
-        choices=['tju600', 'vear220', 'casia200', 'hkpu500', 'scut834'],
-=======
         choices=['tju600', 'vear220', 'casia200', 'hkpu500'],
->>>>>>> 2c9c757 (updates)
         help='name of datasets')
     parser.add_argument(
         '--work_dir',

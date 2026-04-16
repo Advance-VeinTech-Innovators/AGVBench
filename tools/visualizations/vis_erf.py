@@ -147,11 +147,7 @@ def create_erf_heatmap(data, colormap='RdYlGn', figsize=(10, 10.75), save_path=N
         from mpl_toolkits.axes_grid1.axes_divider import make_axes_locatable
         from mpl_toolkits.axes_grid1.colorbar import colorbar
         ax_divider = make_axes_locatable(ax)
-<<<<<<< HEAD
         cax = ax_divider.append_axes('top', size='5%', pad='2%')
-=======
-        cax = ax_divider.append_axes('top', size='5%', pad='0.2%')
->>>>>>> 2c9c757 (updates)
         colorbar(ax.get_children()[0], cax=cax, orientation='horizontal')
         cax.xaxis.set_ticks_position('top')
         cax.xaxis.set_label_position('top')
@@ -164,11 +160,7 @@ def create_erf_heatmap(data, colormap='RdYlGn', figsize=(10, 10.75), save_path=N
     
     if save_path:
         Path(save_path).parent.mkdir(parents=True, exist_ok=True)
-<<<<<<< HEAD
-        plt.savefig(save_path, bbox_inches='tight', dpi=100, pad_inches=0.1)
-=======
         plt.savefig(save_path, bbox_inches='tight', dpi=300, pad_inches=0.1)
->>>>>>> 2c9c757 (updates)
         plt.close()
     else:
         plt.show()

@@ -197,7 +197,6 @@ class BasicAugClassification(BaseModel):
                 img = self.policy_mode[cur_mode](img, gt_label, pred_raw, **self.aug_args[cur_mode])
         else:
             assert cur_mode == "vanilla"
-
         x = self.backbone(img)
 
         # augmentation loss
