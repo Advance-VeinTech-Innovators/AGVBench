@@ -201,7 +201,10 @@ class BasicAugClassification(BaseModel):
 
         # augmentation loss
         pred_aug = self.head(x)
-        losses = self.head.loss(pred_aug, gt_label)
+        if cur_mode == "ricap":
+            losses = self.head.ricap_loss(pred_aug, gt_label)
+        else:
+            losses = self.head.loss(pred_aug, gt_label)
         losses['loss'] /= self.aug_repeat
 
         # save augmented img
