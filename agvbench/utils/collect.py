@@ -273,23 +273,28 @@ def fgsm_nondist_forward_collect(func, data_loader, length, head, dataset='vera2
         std=[0.264, 0.264, 0.264]
     else: 
         raise ValueError("please chose a valid dataset")
-    mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
+    
+    device = img.device
+    mean, std = torch.tensor(mean).view(1, -1, 1, 1).to(device), torch.tensor(std).view(1, -1, 1, 1).to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
     prog_bar = mmcv.ProgressBar(len(data_loader))
     for i, data in enumerate(data_loader):
         img = data['img']
-        inputs = Variable(img, requires_grad=True)
+        # Bug fix: use clone().detach().requires_grad_(True) instead of deprecated Variable
+        inputs = img.clone().detach().requires_grad_(True)
         data['img'] = inputs
         output = func(**data)
         loss = criterion(output[head], data['gt_label'])
         loss.backward()
 
         sign_data_grad = inputs.grad.sign()
-        inputs = (inputs * std + mean) + (eps / 255.) * sign_data_grad
-        inputs = torch.clamp(inputs, 0, 1)
-        inputs = (inputs - mean) / std
+        # Bug fix: perturb directly in normalized space, then clip in pixel space
+        img_pixel = inputs.detach() * std + mean
+        img_pixel_adv = img_pixel + (eps / 255.) * sign_data_grad
+        img_pixel_adv = torch.clamp(img_pixel_adv, 0, 1)
+        inputs = (img_pixel_adv - mean) / std
         data['img'] = inputs.detach()
 
         with torch.no_grad():
@@ -330,21 +335,25 @@ def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera22
         std=[0.264, 0.264, 0.264]
     else: 
         raise ValueError("please chose a valid dataset")
-    mean, std = torch.tensor(mean).view(1, -1, 1, 1), torch.tensor(std).view(1, -1, 1, 1)
+    
+    device = img.device
+    mean, std = torch.tensor(mean).view(1, -1, 1, 1).to(device), torch.tensor(std).view(1, -1, 1, 1).to(device)
 
     criterion = torch.nn.CrossEntropyLoss()
     results = []
     prog_bar = mmcv.ProgressBar(len(data_loader))
     for i, data in enumerate(data_loader):
         img = data['img']
-        inputs = Variable(img.clone().detach(), requires_grad=True)
+        inputs = img.clone().detach().requires_grad_(True)
+
+        # denorm original image to pixel space once (used as clip center)
+        img_pixel = img.detach() * std + mean
 
         if random_start:
-            rand_perturb = torch.rand_like(inputs) * 2 * (eps / 255.) - (eps / 255.)
-            rand_perturb = rand_perturb * std
-            inputs = inputs * std + mean + rand_perturb
-            inputs = torch.clamp(inputs, 0, 1)
-            inputs = ((inputs - mean) / std).detach().requires_grad_(True)
+            # Bug fix: rand_perturb is already in pixel space, do NOT multiply by std again
+            rand_perturb = torch.rand_like(img_pixel) * 2 * (eps / 255.) - (eps / 255.)
+            inputs_pixel = torch.clamp(img_pixel + rand_perturb, 0, 1)
+            inputs = ((inputs_pixel - mean) / std).detach().requires_grad_(True)
 
         # PGD iter
         for _ in range(steps):
@@ -353,17 +362,16 @@ def pgd_nondist_forward_collect(func, data_loader, length, head, dataset='vera22
             if targeted:
                 loss = -criterion(output[head], data['gt_label'])
             else:
-                loss = criterion(output[head], data['gt_label']) 
+                loss = criterion(output[head], data['gt_label'])
             loss.backward()
 
             sign_data_grad = inputs.grad.sign()
-            inputs = (inputs * std + mean) + (alpha / 255.) * (sign_data_grad * std)
-            img = img * std + mean
-
-            inputs = torch.max(torch.min(inputs, (img + (eps/ 255.))), img - (eps / 255.))
-            inputs = torch.clamp(inputs, 0, 1)
-            inputs = (inputs - mean) / std
-            inputs = inputs.detach().requires_grad_(True)
+            # Bug fix: update in pixel space, clip, then re-normalize
+            # img_pixel is computed once outside the loop (no drift)
+            inputs_pixel = inputs.detach() * std + mean + (alpha / 255.) * sign_data_grad
+            inputs_pixel = torch.max(torch.min(inputs_pixel, img_pixel + (eps / 255.)), img_pixel - (eps / 255.))
+            inputs_pixel = torch.clamp(inputs_pixel, 0, 1)
+            inputs = ((inputs_pixel - mean) / std).detach().requires_grad_(True)
         data['img'] = inputs.detach()
 
         with torch.no_grad():
@@ -440,7 +448,7 @@ def _l1_projection(x2, y2, eps1):
         counter = 0
         while counter < nitermax:
             counter4 = torch.floor((lb + ub) / 2.0)
-            counter2 = counter4.type(torch.LongTensor)
+            counter2 = counter4.long()  # Bug fix: keep on same device as s/c (avoid CPU LongTensor)
 
             c8 = s[c2, counter2] + c[c2] < 0
             ind3 = c8.nonzero().squeeze(1)
@@ -509,7 +517,7 @@ def apgd_attack_single_run(predict, x, y, eps, n_iter=100, norm='Linf', loss='ce
     n_iter_min = max(int(0.06 * n_iter), 1)
     size_decr = max(int(0.03 * n_iter), 1)
 
-    if len(x.shape) < ndims:
+    if len(x.shape) == ndims:  # no batch dim
         x = x.unsqueeze(0)
         y = y.unsqueeze(0)
 
