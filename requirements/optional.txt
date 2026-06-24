@@ -1,7 +1,0 @@
-albumentations>=0.3.2    # For Albumentations data transform
-faiss-gpu>=1.6.1      # For DeepCluster and ODC
-grad-cam >= 1.3.7     # For CAM visualization
-gco-wrapper           # For PuzzleMix (please install from source)
-opencv-contrib-python-headless # For SaliencyMix
-requests              # For torchserve
-scikit-image
