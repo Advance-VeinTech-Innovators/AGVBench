@@ -1,3 +1,3 @@
 # AGVBench Webpage
 
-**Link:** https://advance-VeinTech-Innovators.github.io/AGVBench/
+**Link:** https://Advance-VeinTech-Innovators.github.io/AGVBench/
