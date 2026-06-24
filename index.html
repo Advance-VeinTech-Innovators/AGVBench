@@ -1,1 +1,395 @@
-<h1>Website Page</h1>
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AGVBench: A Reliability-Oriented Benchmark of Data Augmentation for Vein Recognition</title>
+  <meta name="description" content="AGVBench is a benchmark for evaluating data augmentation in vein recognition across datasets, architectures, and reliability metrics.">
+  <link rel="stylesheet" href="assets/css/main.css">
+</head>
+<body>
+  <nav class="nav" aria-label="Primary navigation">
+    <a class="brand" href="#top" aria-label="AGVBench home">
+      <img src="assets/imgs/agvbench_logo.png" alt="AGVBench logo">
+      <span>AGVBench</span>
+    </a>
+    <div class="nav-links">
+      <a href="#paper">Paper</a>
+      <a href="#overview">Motivation</a>
+      <a href="#benchmark">Benchmark</a>
+      <a href="#experiments">Experiments</a>
+      <a href="#findings">Findings</a>
+      <a href="#codebase">Codebase</a>
+      <a href="#analysis">Analysis</a>
+      <a href="#citation">Cite</a>
+    </div>
+  </nav>
+
+  <header class="hero" id="top">
+    <div class="hero-copy">
+      <h1 class="paper-title">AGVBench: A Reliability-Oriented Benchmark of Data Augmentation for Vein Recognition</h1>
+      <p class="subtitle">A systematic study of data augmentation for palm-vein and finger-vein recognition, evaluating recognition, verification, calibration, corruption robustness, adversarial robustness, and occlusion robustness under a unified protocol.</p>
+      <div class="author-list" aria-label="Authors">
+        <span>Haiyang Li<sup>*</sup></span>  
+        <span>Yuming Fu<sup>*</sup></span>  
+        <span>Qun Song<sup>*</sup></span>  
+        <span>Hongchao Liao</span>  
+        <span>Jing Chen</span>
+        <span>Mounim A. El-Yacoubi</span>  
+        <a href="https://jinxins.github.io/">Xin Jin<sup>&dagger;</sup></a>
+      </div>
+      <div class="affiliations">
+        <sup>1</sup>Chongqing Technology and Business University, China &nbsp;
+        <sup>2</sup>Guangzhou College of Applied Science and Technology, China &nbsp;
+        <sup>3</sup>SAMOVAR, Telecom SudParis, Institut Polytechnique de Paris, France &nbsp;
+        <sup>4</sup>Westlake University, China
+      </div>
+      <div class="contrib-note"><sup>*</sup>Equal contribution. <sup>&dagger;</sup>Corresponding author.</div>
+      <div class="email-line">Contact: <a href="mailto:jinxin86@westlake.edu.cn">jinxin86@westlake.edu.cn</a></div>
+      <div class="actions">
+        <a class="button" href="assets/imgs/agvbench_paper.pdf">arXiv</a>
+        <a class="button" href="">HuggingFace</a>
+        <a class="button" href="">Codes</a>
+        <a class="button" href="">Datasets</a>
+      </div>
+    </div>
+    <figure class="hero-figure">
+      <img src="assets/imgs/fig_teaser.png" alt="AGVBench overview teaser">
+    </figure>
+  </header>
+
+  <main>
+    <section id="paper">
+      <div class="wrap">
+        <h2 class="section-title">Paper Summary</h2>
+        <p class="section-lead">Data augmentation is essential when annotated vein images are limited, but strategies designed for natural images can distort vascular topology and high-frequency identity cues. AGVBench provides a standardized benchmark to measure whether an augmentation improves recognition while preserving deployment-oriented reliability.</p>
+        <div class="stats">
+          <div class="stat"><strong>30</strong><span>augmentation strategies across single-image, multi-image, and label-enhancement families</span></div>
+          <div class="stat"><strong>5</strong><span>public palm-vein and finger-vein datasets</span></div>
+          <div class="stat"><strong>7</strong><span>CNN, transformer, and vein-specific backbone architectures</span></div>
+          <div class="stat"><strong>6</strong><span>evaluation dimensions from accuracy to adversarial robustness</span></div>
+        </div>
+        <figure class="figure-tile section-spacer">
+          <img src="assets/imgs/fig_aug_vis.png" alt="Visual examples of augmentation methods">
+        </figure>
+      </div>
+    </section>
+
+    <section id="overview">
+      <div class="wrap">
+        <h2 class="section-title">Motivation</h2>
+        <p class="section-lead">Biometric systems are evaluated by more than classification accuracy. A usable vein recognition system must maintain low equal error rate, high true acceptance under strict false acceptance constraints, calibrated confidence, and robustness under sensor noise, occlusion, corruption, and adversarial perturbation.</p>
+        <div class="grid">
+          <article class="panel">
+            <h3>Topology sensitivity</h3>
+            <p>Vein identity depends on vascular geometry. Spatial transforms that are harmless for natural images can break discriminative vessel structures.</p>
+          </article>
+          <article class="panel">
+            <h3>Reliability gap</h3>
+            <p>Augmentations that maximize Top-1 accuracy may still produce overconfident scores or weak adversarial behavior.</p>
+          </article>
+          <article class="panel">
+            <h3>Reproducibility</h3>
+            <p>AGVBench aligns datasets, backbones, metrics, and augmentation implementations to make method comparisons repeatable.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="benchmark">
+      <div class="wrap">
+        <h2 class="section-title">Benchmark Design</h2>
+        <p class="section-lead">The benchmark standardizes data splits, preprocessing, training recipes, augmentation modules, and biometric metrics so that augmentation methods can be compared under the same protocol.</p>
+        <div class="grid">
+          <article class="panel">
+            <h3>Datasets</h3>
+            <p>AGVBench covers SCUT1100, TJU600, VERA220, FV-USM, and SDUMLA-HMT, spanning unconstrained palm-vein imagery, two-session palm-vein acquisition, temporal finger-vein variation, and multi-finger recognition.</p>
+            <div class="tag-row">
+              <span class="tag">Palm vein</span>
+              <span class="tag">Finger vein</span>
+              <span class="tag">Public splits</span>
+            </div>
+          </article>
+          <article class="panel">
+            <h3>Pipeline</h3>
+            <p>The experimental pipeline resizes all images to 224 x 224, trains models from scratch, applies augmentation in a unified training interface, and evaluates both closed-set recognition and biometric verification.</p>
+            <div class="tag-row">
+              <span class="tag">Train from scratch</span>
+              <span class="tag">224 x 224</span>
+              <span class="tag">Unified metrics</span>
+            </div>
+          </article>
+          <article class="panel">
+            <h3>Backbones</h3>
+            <p>The evaluation uses general-purpose ResNet18, MobileNetv2, ViT-S, and Swin-T, plus vein-specific FVRASNet, AMPVNet, and StarLKNet-S, all trained from scratch at 224 x 224 resolution.</p>
+            <div class="tag-row">
+              <span class="tag">CNN</span>
+              <span class="tag">Transformer</span>
+              <span class="tag">Vein-specific</span>
+            </div>
+          </article>
+          <article class="panel">
+            <h3>Augmentations</h3>
+            <p>The method suite includes geometric and photometric transforms, occlusion and quantization operators, policy-based augmentation, MixUp-style mixing, CutMix-style regional mixing, and label regularization.</p>
+            <div class="tag-row">
+              <span class="tag">Single image</span>
+              <span class="tag">Multi image</span>
+              <span class="tag">Label enhancement</span>
+            </div>
+          </article>
+        </div>
+        <figure class="figure-tile section-spacer">
+          <img src="assets/imgs/fig_codebase.png" alt="AGVBench codebase organization">
+        </figure>
+      </div>
+    </section>
+
+    <section>
+      <div class="wrap">
+        <h2 class="section-title">Dataset Summary</h2>
+        <p class="section-lead">The benchmark combines small and large datasets because augmentation behavior changes substantially with data scale, acquisition protocol, and anatomical modality.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Dataset</th>
+                <th>Modality</th>
+                <th>Subjects</th>
+                <th>Total Images</th>
+                <th>Collection Characteristics</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>SCUT1100</td>
+                <td>Palm</td>
+                <td>550</td>
+                <td>11,000</td>
+                <td>Unconstrained dynamic acquisition with out-of-plane rotations and grayscale variations.</td>
+              </tr>
+              <tr>
+                <td>TJU600</td>
+                <td>Palm</td>
+                <td>300</td>
+                <td>12,000</td>
+                <td>Two-session collection with variations in posture, positioning, and illumination.</td>
+              </tr>
+              <tr>
+                <td>VERA220</td>
+                <td>Palm</td>
+                <td>110</td>
+                <td>2,200</td>
+                <td>Open-environment acquisition with minor pose variation and ambient-light sensitivity.</td>
+              </tr>
+              <tr>
+                <td>FV-USM</td>
+                <td>Finger</td>
+                <td>123</td>
+                <td>1,476</td>
+                <td>Two-session finger-vein set for temporal intra-class robustness evaluation.</td>
+              </tr>
+              <tr>
+                <td>SDUMLA-HMT</td>
+                <td>Finger</td>
+                <td>106</td>
+                <td>3,816</td>
+                <td>Multi-finger samples with placement and orientation variability.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section id="experiments">
+      <div class="wrap">
+        <h2 class="section-title">Experiments</h2>
+        <p class="section-lead">All experiments are implemented in AGVBench with PyTorch and MMCV. Images are resized to 224 x 224, models are trained from scratch without external pretraining, and accuracy is reported using the median of the last 10 epochs. The main biometric metrics are Top-1 Accuracy, EER, and TAR@FAR=0.0001, denoted below as TPR@FPR=1e-4.</p>
+        <div class="grid">
+          <article class="panel">
+            <h3>Setup</h3>
+            <p>Single NVIDIA A100 GPU; unified image resolution; dataset-specific official or session-based train/test splits.</p>
+          </article>
+          <article class="panel">
+            <h3>Metrics</h3>
+            <p>Top-1 Accuracy measures recognition; EER and TPR@FPR=1e-4 measure strict biometric verification.</p>
+          </article>
+          <article class="panel">
+            <h3>Reliability Tests</h3>
+            <p>Calibration, corruption, FGSM/PGD adversarial attacks, and occlusion classification are evaluated beyond clean accuracy.</p>
+          </article>
+        </div>
+
+        <h3 class="section-title tight">Full Accuracy, EER And TPR@FPR Results</h3>
+        <p class="result-note">Use the buttons to switch datasets. Each table includes all reported methods and all backbone-specific Accuracy, EER, and TPR@FPR=1e-4 results from the paper tables.</p>
+        <div id="accuracy-switcher" class="switcher" aria-label="Accuracy dataset switcher"></div>
+        <div id="accuracy-table"></div>
+
+        <h3 class="section-title tight">ROC Figure Window</h3>
+        <p class="result-note">Use the left and right buttons to switch between ROC figures for the five evaluated vein datasets.</p>
+        <div class="roc-window">
+          <img id="roc-image" src="assets/imgs/fig_roc_vera220.png" alt="VERA220 ROC curves">
+          <div class="roc-controls">
+            <button id="roc-prev" type="button" class="switch-btn">Left</button>
+            <span id="roc-caption" class="result-note roc-caption">VERA220 ROC curves</span>
+            <button id="roc-next" type="button" class="switch-btn">Right</button>
+          </div>
+        </div>
+
+        <h3 class="section-title tight">Composed Augmentation Results</h3>
+        <p class="result-note">Composition studies use ResNet18 on VERA220 and TJU600.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>VERA Acc.</th>
+                <th>VERA EER</th>
+                <th>VERA TPR@FPR</th>
+                <th>TJU Acc.</th>
+                <th>TJU EER</th>
+                <th>TJU TPR@FPR</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Vanilla</td><td>71.45</td><td>5.20</td><td>51.00</td><td>85.55</td><td>1.72</td><td>81.23</td></tr>
+              <tr><td>AutoAugment</td><td>80.82</td><td>2.55</td><td>65.09</td><td>88.28</td><td>1.59</td><td>85.23</td></tr>
+              <tr><td>AutoAugment + LabelSmoothing</td><td>89.73</td><td>2.44</td><td>78.64</td><td>94.97</td><td>0.77</td><td>93.83</td></tr>
+              <tr><td>MixUp</td><td>95.27</td><td>0.91</td><td>92.27</td><td>93.90</td><td>0.84</td><td>92.51</td></tr>
+              <tr><td>MixUp + LabelSmoothing</td><td>97.18</td><td>0.63</td><td>96.36</td><td>96.37</td><td>0.51</td><td>95.33</td></tr>
+              <tr><td>PuzzleMix</td><td>95.55</td><td>0.83</td><td>93.36</td><td>95.25</td><td>0.46</td><td>94.45</td></tr>
+              <tr><td>PuzzleMix + LabelSmoothing</td><td>97.27</td><td>0.65</td><td>96.09</td><td>96.58</td><td>0.38</td><td>96.05</td></tr>
+              <tr><td><span class="highlight">AutoAugment + PuzzleMix + LabelSmoothing</span></td><td><span class="highlight">98.00</span></td><td><span class="highlight">0.56</span></td><td><span class="highlight">95.27</span></td><td><span class="highlight">96.50</span></td><td><span class="highlight">0.45</span></td><td><span class="highlight">96.12</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="section-title tight">Calibration Results</h3>
+        <p class="result-note">The figure shows reliability diagrams on VERA220 with ResNet18. The table below reports complete ECE scores across VERA220, TJU600, and SCUT1100. Lower ECE is better.</p>
+        <figure class="figure-tile">
+          <img src="assets/imgs/fig_ece.png" alt="Calibration confidence plots">
+        </figure>
+        <div id="calibration-table" class="table-spacer"></div>
+
+        <h3 class="section-title tight">Corruption Robustness</h3>
+        <p class="result-note">Switch between VERA220-C and TJU600-C. Each table reports C1/C2/C3 corruption accuracy for all methods and backbones.</p>
+        <div id="corruption-switcher" class="switcher" aria-label="Corruption dataset switcher"></div>
+        <div id="corruption-table"></div>
+
+        <h3 class="section-title tight">Adversarial Attack Robustness</h3>
+        <p class="result-note">Switch between TJU600 and SCUT1100. Each table reports Top-1 accuracy under FGSM and PGD attacks for all methods and backbones.</p>
+        <div id="attack-switcher" class="switcher" aria-label="Attack dataset switcher"></div>
+        <div id="attack-table"></div>
+      </div>
+    </section>
+
+    <section id="figures">
+      <div class="wrap">
+        <h2 class="section-title">Occlusion Robustness</h2>
+        <div class="occlusion-layout">
+          <div>
+            <p class="section-lead">The occlusion experiment randomly masks square regions with ratios from 0% to 50% on VERA220 and TJU600 using ResNet18. Cutting-based methods such as Cutout, CutMix, and PuzzleMix maintain more stable performance under spatial information loss, while many other augmentations degrade quickly.</p>
+          </div>
+          <figure class="figure-tile">
+            <img src="assets/imgs/fig_occlusions.png" alt="Occlusion robustness plots">
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="findings">
+      <div class="wrap findings">
+        <div>
+          <h2 class="section-title">Main Findings</h2>
+          <p class="section-lead">Accuracy alone is not sufficient for selecting augmentation in biometric systems. AGVBench shows that high recognition scores, calibrated confidence, and attack robustness often point to different augmentation choices.</p>
+        </div>
+        <div class="finding-list">
+          <article class="finding">
+            <h3>Mixing methods dominate recognition and verification.</h3>
+            <p>MixUp and PuzzleMix on VERA220 with ResNet18 reach 95.27% and 95.55% Top-1 accuracy, far above the 71.45% vanilla baseline. On SCUT1100, MixUp reduces ResNet18 EER from 0.30% to 0.07% and raises TAR@FAR=0.0001 from 97.30% to 99.63%.</p>
+          </article>
+          <article class="finding">
+            <h3>Geometric transforms are risky for vein topology.</h3>
+            <p>Flip, rotation, translation, and related spatial operations often underperform the baseline because vascular identity depends on stable topology rather than object-level semantic invariance.</p>
+          </article>
+          <article class="finding">
+            <h3>Reliability exposes unresolved trade-offs.</h3>
+            <p>MixUp-based methods can be poorly calibrated and adversarially fragile; on TJU600 with ResNet18, MixUp drops to 4.87% under PGD. LabelSmoothing is stronger against FGSM and PGD but can also be miscalibrated.</p>
+          </article>
+          <article class="finding">
+            <h3>Composed augmentations can be better than any single family.</h3>
+            <p>AutoAugment + PuzzleMix + LabelSmoothing reaches 98.00% accuracy, 0.56% EER, and 95.27% TAR@FAR on VERA220, and 96.50%, 0.45%, and 96.12% on TJU600.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="codebase">
+      <div class="wrap code-section">
+        <div>
+          <h2 class="section-title">Codebase And Reproducibility</h2>
+          <p class="section-lead">AGVBench is designed as a PyTorch/MMCV-based benchmark. The expected workflow is configuration driven: choose a dataset, backbone, augmentation policy, and evaluation target, then launch the same training and testing entry points across all methods.</p>
+        </div>
+        <div class="code-layout">
+          <pre><code># Example workflow
+conda create -n agvbench python=3.10
+conda activate agvbench
+pip install torch torchvision mmcv
+
+# Train one augmentation setting
+python tools/train.py configs/vera220/resnet18/mixup.py
+
+# Evaluate recognition, verification, calibration, and robustness
+python tools/test.py configs/vera220/resnet18/mixup.py --metrics all</code></pre>
+          <figure class="figure-tile">
+            <img src="assets/imgs/fig_quick_start.png" alt="AGVBench quick start workflow">
+            <figcaption class="caption">Quick-start workflow for running AGVBench experiments.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="analysis">
+      <div class="wrap">
+        <h2 class="section-title">Analysis, Discussion And Conclusion</h2>
+        <p class="section-lead">AGVBench reveals that augmentation for biometric recognition is a multi-objective design problem rather than a single accuracy optimization problem.</p>
+        <div class="grid single-column">
+          <article class="panel">
+            <h3>Analysis</h3>
+            <p>Multi-image methods such as MixUp, PuzzleMix, and StarMixup usually provide the strongest recognition and verification performance. Their gains are most visible on smaller datasets such as VERA220 and FV-USM, while strict verification metrics remain informative even on saturated datasets such as SCUT1100.</p>
+          </article>
+          <article class="panel">
+            <h3>Discussion</h3>
+            <p>Geometric augmentations often degrade vein recognition because they disturb vascular topology. High-accuracy mixup-style methods can also be poorly calibrated and adversarially fragile, showing that no single current method resolves accuracy, calibration, and robustness simultaneously.</p>
+          </article>
+          <article class="panel">
+            <h3>Conclusion</h3>
+            <p>AGVBench evaluates 30 augmentation strategies across five datasets, seven architectures, and six evaluation dimensions. The benchmark motivates augmentation methods that jointly optimize recognition accuracy, verification security, calibration, and robustness for real-world vein recognition systems.</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section id="citation">
+      <div class="wrap">
+        <h2 class="section-title">Cite</h2>
+        <pre><code>@article{li2026agvbench,
+  title  = {AGVBench: A Reliability-Oriented Benchmark of Data Augmentation for Vein Recognition},
+  author = {Li, Haiyang and Fu, Yuming and Song, Qun and Liao, Hongchao and Chen, Jing and El-Yacoubi, Mounim A. and Jin, Xin},
+  journal = {arXiv},
+  year   = {2026}
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap">
+      <div>AGVBench: Reliability-oriented data augmentation for vein recognition.</div>
+      <div>Contact: <a href="mailto:jinxin86@westlake.edu.cn">jinxin86@westlake.edu.cn</a></div>
+    </div>
+  </footer>
+  <script src="agvbench-tables.js"></script>
+</body>
+</html>
+
