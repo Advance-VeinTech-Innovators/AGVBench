@@ -24,7 +24,7 @@ def single_gpu_test(model, data_loader):
     return results
 
 
-def adver_attack_test(model, data_loader, head, dataset='cifar', mode="fgsm"):
+def adver_attack_test(model, data_loader, head, dataset='vear220', mode="fgsm"):
     model.eval()
     func = lambda **x: model(mode='test', **x)
     if mode == "fgsm":
@@ -72,8 +72,8 @@ def parse_args():
     parser.add_argument(
         '--dataset',
         type=str,
-        default='cifar', # choose head : cifar or imagenet
-        help='choose dataset type in [cifar, imagenet] for the normalization')
+        default='vera220',
+        help='choose dataset type in [vera220, tju600, casia200, etc] for the normalization')
     parser.add_argument(
         '--work_dir',
         type=str,

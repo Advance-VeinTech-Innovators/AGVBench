@@ -4,6 +4,7 @@ import os.path as osp
 import shutil
 import sys
 import warnings
+import subprocess
 from setuptools import find_packages, setup
 
 
@@ -96,6 +97,8 @@ def parse_requirements(fname='requirements.txt', with_version=True):
                 yield item
 
     packages = list(gen_packages_items())
+    # Filter out PyWavelets to avoid easy_install issues - it will be installed separately
+    packages = [pkg for pkg in packages if not pkg.startswith('PyWavelets')]
     return packages
 
 
@@ -159,7 +162,24 @@ def add_mim_extension():
                 raise ValueError(f'Invalid mode {mode}')
 
 
+def install_pywavelets():
+    """Install PyWavelets separately using pip to avoid easy_install issues."""
+    try:
+        import pywavelets
+    except ImportError:
+        try:
+            subprocess.check_call([
+                sys.executable, '-m', 'pip', 'install', 'PyWavelets>=1.4.1'
+            ])
+        except subprocess.CalledProcessError:
+            warnings.warn(
+                'Failed to install PyWavelets automatically. '
+                'Please install it manually with: pip install PyWavelets>=1.4.1')
+
+
 if __name__ == '__main__':
+    # Install PyWavelets separately to avoid easy_install issues
+    install_pywavelets()
     add_mim_extension()
     setup(
         name='agvbench',
@@ -167,8 +187,8 @@ if __name__ == '__main__':
         description='A Comprehensive Benchmark and Analysis of Data Augmentation in Vein Identification',
         long_description=readme(),
         long_description_content_type='text/markdown',
-        author='Jin Xin',
-        author_email='jinxin20001118@gmail.com',
+        author='Xin Jin',
+        author_email='jinxin86@westlake.edu.cn',
         keywords='computer vision, image classification, biometric identification, data augmentation'
         'mixup classification',
         packages=find_packages(exclude=('configs', 'tools', 'demo')),

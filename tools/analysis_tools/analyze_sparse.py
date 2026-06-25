@@ -233,9 +233,6 @@ def main():
     print_log("Sparsity from each Layers:", logger=logger)
     for name, sparsity in layer_sparsity.items():
         print_log(f"{name}: {sparsity:.2f}%", logger=logger)
-    # for name, sparsity in sorted(layer_sparsity.items(), key=lambda x: x[1], reverse=True):
-        # if sparsity > 0:
-            # print_log(f"{name}: {sparsity:.2f}%", logger=logger)
     print_log("Sparsity from each Channels:", logger=logger)
     for name, sparsity in channel_sparsity.items():
         print_log(f"{name}: {sparsity:.2f}%", logger=logger)
@@ -254,15 +251,6 @@ def main():
                                                       'backbone.layer3',
                                                       'backbone.layer4', 
                                                       'head']
-                                    #   layer_keywords=['backbone.stem', 
-                                    #                   'backbone.stages.0', 
-                                    #                   'backbone.stages.1', 
-                                    #                   'backbone.stages.2',
-                                    #                   'backbone.stages.3',
-                                    #                   'backbone.blockneck.0',
-                                    #                   'backbone.blockneck.1',
-                                    #                   'backbone.blockneck.2', 
-                                    #                   'head']
                                     )
 
     print_log(f"The logs results saved in {log_file}", logger=logger)
