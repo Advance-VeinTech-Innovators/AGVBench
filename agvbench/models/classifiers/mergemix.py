@@ -309,17 +309,10 @@ class MergeMix(BaseModel):
 
         loss_mix, loss_base = self.forward_mix(img, results["img_mix"], gt_label, results['index'], _lam)  # orl: lam_mix                
         
-        # losses = {
-        #     'loss': loss_one_hot['loss'],
-        #     'acc_one': loss_one_hot['acc'],
-        # }
         losses = {
             'loss': loss_mix['loss'],
             'acc_mix': loss_mix['acc'],
         }
-        # if loss_mix is not None:
-            # losses['loss'] += loss_mix['loss']
-            # losses['acc_mix'] = loss_mix['acc']
         if loss_base is not None:
             losses['loss'] += loss_base['loss']
             losses['acc_base'] = loss_base['acc']
@@ -327,8 +320,6 @@ class MergeMix(BaseModel):
         
         # save img mb
         if self.save:
-            # self.plot_mix(results["img_mix"], img, img[results['index'], :], lam, \
-                        #   results["index"], results["debug_plot"], "mixed sample")
             self.plot_mix(results["img_mix"], img, img[results['index'], :], lam, \
                           results["index"], name="mixed sample")
 

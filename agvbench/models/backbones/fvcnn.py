@@ -14,6 +14,7 @@ class ConvBlock(nn.Module):
                  ):
         super(ConvBlock, self).__init__()
         self.conv3x3 = nn.Conv2d(in_channels, out_channels, kernel_size=5)
+        # self.conv3x3 = nn.Conv2d(in_channels, out_channels, kernel_size=5, padding=2)
         self.bn = nn.BatchNorm2d(out_channels)
         self.maxpool = nn.MaxPool2d(kernel_size=2, stride=2)
 

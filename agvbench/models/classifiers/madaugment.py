@@ -168,6 +168,7 @@ class MAdAugmentation(BaseModel):
         Returns:
             dict[str, Tensor]: A dictionary of loss components.
         """
+
         if isinstance(img, list):
             img = img[0]
         self._update_loss_weights()

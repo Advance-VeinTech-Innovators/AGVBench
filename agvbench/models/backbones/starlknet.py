@@ -453,14 +453,23 @@ class StarLKNet(BaseBackbone):
         dict(
             large_kernel_sizes=[31, 29, 27, 13],
             layers=[2, 2, 18, 2],
-            channels=[192, 384, 768, 1536],
-            small_kernel=5),
+            channels=[256, 512, 1024, 2048],
+            small_kernel=5,
+            dilation_ratio=[1, 3]),
         'small':
         dict(
             large_kernel_sizes=[27, 27, 27, 13],
             layers=[2, 2, 18, 2],
             channels=[64, 128, 256, 512],
-            small_kernel=None),
+            small_kernel=3,
+            dilation_ratio=[1, 3]),
+        'tiny':
+        dict(
+            large_kernel_sizes=[27, 27, 27, 13],
+            layers=[2, 2, 10, 2],
+            channels=[32, 64, 128, 256],
+            small_kernel=3,
+            dilation_ratio=[1, 3]),
     }
 
     def __init__(self,

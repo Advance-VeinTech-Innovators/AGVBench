@@ -13,7 +13,7 @@ from agvbench.datasets import build_dataloader, build_dataset
 from agvbench.models import build_model
 from agvbench.utils import (get_root_logger, dist_forward_collect, print_log,
                              setup_multi_processes, nondist_forward_collect, traverse_replace,
-                             fgsm_nondist_forward_collect, pgd_nondist_forward_collect)
+                             fgsm_nondist_forward_collect, pgd_nondist_forward_collect, apgd_nondist_forward_collect)
 
 
 def single_gpu_test(model, data_loader):
@@ -28,11 +28,12 @@ def adver_attack_test(model, data_loader, head, dataset='cifar', mode="fgsm"):
     model.eval()
     func = lambda **x: model(mode='test', **x)
     if mode == "fgsm":
-        results = fgsm_nondist_forward_collect(func, data_loader,
-                                            len(data_loader.dataset), head, dataset)
+        results = fgsm_nondist_forward_collect(func, data_loader, len(data_loader.dataset), head, dataset)
     elif mode == "pgd":
         results = pgd_nondist_forward_collect(func, data_loader,
                                             len(data_loader.dataset), head, dataset, random_start=True, targeted=False)
+    elif mode == "apgd":
+        results = apgd_nondist_forward_collect(func, data_loader, len(data_loader.dataset), head, dataset)
     else:
         raise ValueError("Wrong Adversarial Attack method.")
     return results
@@ -156,9 +157,26 @@ def main():
     mmcv.mkdir_or_exist(osp.abspath(cfg.work_dir))
 
     # logger
-    timestamp = time.strftime('%Y%m%d_%H%M%S', time.localtime())
-    log_file = osp.join(cfg.work_dir, 'test_{}_{}.log'.format(timestamp, args.keys))
+    config_split = args.config.split('/')
+    config_name = config_split[-1].split('.')[0].split('_')
+    model_name = config_name[0]
+    if model_name in ["starlknet", "vit", "swin"]:
+        aug_name = config_name[2]
+        model_name = model_name + "_" + config_name[1]
+        model_aug = model_name + "_" + aug_name
+    else:
+        aug_name = config_name[1]
+        model_aug = model_name + "_" + aug_name
+    save_base_dir = osp.join(cfg.work_dir, args.dataset, model_name, model_aug)
+    log_file = osp.join(save_base_dir, f"test_{args.keys}.log")
+    if osp.exists(log_file):
+        print(f"{log_file} already exists")
+        return
+    mmcv.mkdir_or_exist(osp.abspath(save_base_dir))
     logger = get_root_logger(log_file=log_file, log_level=cfg.log_level)
+
+    if aug_name == "teachaug":
+        args.head = "acc_aug_q"
 
     # build the dataloader
     dataset = build_dataset(cfg.data.val)
@@ -175,11 +193,14 @@ def main():
 
     if not distributed:
         model = MMDataParallel(model, device_ids=[0])
-        if args.keys == 'fgsm' or 'pgd':
+        if args.keys in ['fgsm', 'pgd', 'apgd']:
             if args.keys == 'fgsm':
                 print_log("FGSM (Fast Gradient Sign Method) compute adversarial robustness error", logger=logger)
-            else:
+            elif args.keys == 'pgd':
                 print_log("PGD (Projected Gradient Descent) compute adversarial robustness error", logger=logger)
+            else:
+                print_log("AutoPGD compute adversarial robustness error", logger=logger)
+
             outputs = adver_attack_test(model, data_loader, args.head, args.dataset, mode=args.keys)
 
             rank, _ = get_dist_info()
@@ -190,7 +211,7 @@ def main():
         else:
             print_log("Calibration evaluation ECE", logger=logger)
             outputs = single_gpu_test(model, data_loader)
-            result = dataset.ece_score(outputs[args.head], save_name=cfg.work_dir)
+            result = dataset.ece_score(outputs[args.head], save_name=save_base_dir)
             print_log("ECE score: {:4f}%".format(result * 100), logger=logger)
 
 

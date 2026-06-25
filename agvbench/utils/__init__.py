@@ -1,7 +1,7 @@
 from .alias_multinomial import AliasMethod
 from .collect import (nondist_forward_collect, dist_forward_collect,
                       collect_results_cpu, collect_results_gpu, occlusion_forward_collect, 
-                      fgsm_nondist_forward_collect, pgd_nondist_forward_collect)
+                      fgsm_nondist_forward_collect, pgd_nondist_forward_collect, apgd_nondist_forward_collect)
 from .collect_env import collect_env
 from .config_tools import ConfigGenerator, traverse_replace
 from .dist_utils import (allreduce_grads, allreduce_params, all_reduce,

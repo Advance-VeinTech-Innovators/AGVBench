@@ -7,7 +7,7 @@ data_source_cfg = dict(type='ImageNet')
 # ImageNet dataset
 data_train_list = 'data/meta/casia200/train.txt'
 data_train_root = 'data/casia200/train/'
-data_test_list = 'data/meta/casia200/val.txt'
+data_test_list = 'data/meta/casia200/test.txt'
 data_test_root = 'data/casia200/val/'
 
 dataset_type = 'ClassificationDataset'

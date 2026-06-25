@@ -14,8 +14,8 @@ import mmcv
 from mmcv import DictAction
 from mmcv.parallel import MMDataParallel
 from mmcv.runner import load_checkpoint
-from openmixup.models import build_model
-from openmixup.utils import get_root_logger, print_log, setup_multi_processes, traverse_replace
+from agvbench.models import build_model
+from agvbench.utils import get_root_logger, print_log, setup_multi_processes, traverse_replace
 
 
 def calculate_global_sparsity(model):

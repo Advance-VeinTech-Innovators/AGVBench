@@ -30,7 +30,6 @@ def ricap(img,
         return_mask (bool): Whether to return the cutting-based mask of
             shape (N, 1, H, W). Defaults to False.
     """
-
     if lam is None:
         lam = np.random.beta(alpha, alpha, choose_num)
     
@@ -44,8 +43,6 @@ def ricap(img,
 
     # select four img
     cropped_images = {}
-    # gt_label_ = {}
-    # lam_ = {}
     gt_label_ = []
     lam_ = []
     for k in range(4):
@@ -55,6 +52,7 @@ def ricap(img,
         cropped_images[k] = img[index][:, :, x_k:x_k + w_[k], y_k:y_k + h_[k]]
         gt_label_.append(gt_label[index])
         lam_.append( (w_[k] * h_[k]) / (img1 * img2) )
+
     # patch cropped images
     patched_images = torch.cat(
         (torch.cat((cropped_images[0], cropped_images[1]), 2),

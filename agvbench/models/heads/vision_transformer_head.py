@@ -312,6 +312,44 @@ class VisionTransformerClsHead(BaseModule):
             if multi_lam is False:
                 losses['acc_mix'] = accuracy_mixup(cls_score, labels)
         return losses
+    
+    def ricap_loss(self, cls_score, labels, **kwargs):
+        """" ricap classification loss forward
+
+        Args:
+            cls_score (list): Score should be [tensor] of [N, d].
+            labels (tuple): Labels returned by ricap, i.e. (gt_label_, lam_),
+                where gt_label_ is a list of 4 tensors [N] and lam_ is a list
+                of 4 scalar floats representing the area ratio of each patch.
+        """
+        losses = dict()
+        assert isinstance(cls_score, (tuple, list)) and len(cls_score) >= 1
+        cls_score = cls_score[0]
+
+        if isinstance(labels, tuple) and len(labels) == 2:
+            y, lam = labels
+            assert len(y) == 4 and len(lam) == 4, \
+                "RICAP labels should contain exactly 4 patches, " \
+                "got y: {}, lam: {}".format(len(y), len(lam))
+            y_a, y_b, y_c, y_d = y
+            # lam_ is a list of 4 scalar floats; convert to tensor first,
+            # then unpack so each lam_x is a scalar tensor on the right device.
+            lam_tensor = torch.tensor(lam, dtype=torch.float32, device=cls_score.device)
+            lam_a, lam_b, lam_c, lam_d = lam_tensor
+        else:
+            raise ValueError("RICAP labels should be a tuple of (gt_label_, lam_)")
+
+        avg_factor = y_a.size(0)
+        losses['loss'] = (
+            self.criterion(cls_score, y_a, avg_factor=avg_factor, **kwargs) * lam_a +
+            self.criterion(cls_score, y_b, avg_factor=avg_factor, **kwargs) * lam_b +
+            self.criterion(cls_score, y_c, avg_factor=avg_factor, **kwargs) * lam_c +
+            self.criterion(cls_score, y_d, avg_factor=avg_factor, **kwargs) * lam_d
+        )
+        # compute accuracy against the label of the dominant patch (largest lam)
+        dominant_idx = lam_tensor.argmax().item()
+        losses['acc'] = accuracy(cls_score, y[dominant_idx])
+        return losses
 
 @HEADS.register_module
 class DistillationVisionTransformerClsHead(BaseModule):

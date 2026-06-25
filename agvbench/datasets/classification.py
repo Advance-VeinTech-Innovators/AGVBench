@@ -174,7 +174,6 @@ class ClassificationDataset(BaseDataset):
 
         return results
 
-
     def eer(self, score, num_class=600, name=None, work_dir=None):
         score = torch.tensor(score).cuda().cpu()
         score = score.softmax(dim=1)

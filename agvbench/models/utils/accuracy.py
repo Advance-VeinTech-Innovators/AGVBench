@@ -28,7 +28,7 @@ def accuracy(pred, target, topk=1, thrs=0.):
     assert isinstance(thrs, Number), \
         f'thrs should be a number, but got {type(thrs)}.'
     if isinstance(topk, int):
-        topk = (topk, )
+        topk = (topk,)
         return_single = True
     else:
         return_single = False
@@ -52,13 +52,18 @@ def accuracy(pred, target, topk=1, thrs=0.):
 
 def accuracy_mixup(pred, targets):
     """ Accuracy for mixup classification 
-    
+
     Args:
         pred (tensor): Nxd predictions.
-        targets (tuple): Mixup labels tuple (y_a, y_b, lambda).
+        targets (tuple): Mixup labels tuple (y_a, y_b, lambda), or
+            (y_a, y_b, lam, lam_) when lambdas are explicit (e.g. GuidedMixup;
+            lam_ is redundant with 1 - lam and is dropped for this metric).
     Return:
         Res: Single result of lam * Acc_lam + (1-lam) * Acc_lam_.
     """
+    if len(targets) == 4:
+        y_a, y_b, lam, _ = targets
+        targets = (y_a, y_b, lam)
     lam = targets[2]
     if isinstance(lam, type(pred)):  # bugs of sample-wise lam
         lam = lam.mean().cpu().numpy()
@@ -96,15 +101,15 @@ def accuracy_co_mixup(pred, targets):
     # top-1 for lam_a
     for i in range(0, len(y)):
         correct_y = pred_label.eq(y[i].view(1, -1).expand_as(pred_label))
-        if i == len(y)-1:
+        if i == len(y) - 1:
             correct_lam = correct_y[i:].view(-1).float().sum(0, keepdim=True)
         else:
-            correct_lam = correct_y[i:i+1].view(-1).float().sum(0, keepdim=True)
+            correct_lam = correct_y[i:i + 1].view(-1).float().sum(0, keepdim=True)
         res_lam.append(correct_lam.mul_(100.0 / pred.size(0)))
 
     total_res = 0.0
     for i in range(0, len(res_lam)):
-        total_res += res_lam[i]*lam[i]
+        total_res += res_lam[i] * lam[i]
 
     return total_res
 
@@ -134,7 +139,7 @@ def accuracy_semantic_softmax(pred, target, processor):
             accuracy_valid_list.append(num_valids)
             if num_valids > 0:
                 accuracy_list.append((
-                    pred_i[ind_valid] == targets_i[ind_valid]).float().mean())
+                                             pred_i[ind_valid] == targets_i[ind_valid]).float().mean())
             else:
                 accuracy_list.append(0)
             result += accuracy_list[-1] * accuracy_valid_list[-1]
@@ -145,7 +150,7 @@ def accuracy_semantic_softmax(pred, target, processor):
 
 class Accuracy(nn.Module):
 
-    def __init__(self, topk=(1, )):
+    def __init__(self, topk=(1,)):
         """Module to calculate the accuracy.
 
         Args:

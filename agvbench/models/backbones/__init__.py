@@ -65,6 +65,8 @@ from .fvcnn import FVCNN
 from .pvcnn import PVCNN
 from .starlknet import StarLKNet
 from .ampvnet import AMPVNet
+from .wtxgrn import WTxGRN
+from .rsnet import RSNet
 
 __all__ = [
     'AlexNet', 'BEiTViT', 'BEiTVisionTransformer', 'ContextCluster',
@@ -88,5 +90,5 @@ __all__ = [
     'ToMeTransformerEncoderLayer', 'ToMeVisionTransformer', 'VisRetNet',
 
     # For Vein
-    'StarLKNet', 'FVRASNet', 'PVCNN', 'FVCNN', 'AMPVNet'
+    'StarLKNet', 'FVRASNet', 'PVCNN', 'FVCNN', 'AMPVNet', 'WTxGRN', 'RSNet'
 ]

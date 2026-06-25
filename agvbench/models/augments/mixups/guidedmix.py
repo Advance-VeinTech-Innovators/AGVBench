@@ -3,14 +3,17 @@ import torch
 import torch.nn as nn
 import torchvision.transforms as transforms
 import torchvision.transforms.functional as F
+
 try:
     import sys
     from pairing import onecycle_cover
-except: pass
+except:
+    pass
 from copy import deepcopy
 
 DTYPE = np.float32
 INF = np.inf
+
 
 def onecycle_cover(distance_matrix):
     row = 0
@@ -46,8 +49,8 @@ def guidedmix(img,
               guided_type='ap',
               condition='greedy',
               distance_metric='l2',
-              size=(7,7),
-              sigma=(3,3),
+              size=(7, 7),
+              sigma=(3, 3),
               return_mask=False,
               **kwargs):
     r""" GuidedMixup augmentation
@@ -74,7 +77,7 @@ def guidedmix(img,
     def cosine_similarity(a, b):
 
         dot = a.matmul(b.t())
-        norm =a.norm(dim=1, keepdim=True).matmul(b.norm(dim=1, keepdim=True).t())
+        norm = a.norm(dim=1, keepdim=True).matmul(b.norm(dim=1, keepdim=True).t())
 
         return dot / norm
 
@@ -87,18 +90,18 @@ def guidedmix(img,
 
         if b is None:
             b = a
-        if distance_metric=='cosine':
-            distance = 1 - cosine_similarity(a.view(a.shape[0],-1), b.view(b.shape[0],-1))
-        elif distance_metric=='cosine_abs':
-            distance = 1 - cosine_similarity(a.view(a.shape[0],-1), b.view(b.shape[0],-1)).abs()
-        elif distance_metric =='l1':
-            ra = a.view(a.shape[0],-1).unsqueeze(1)
-            rb = b.view(b.shape[0],-1).unsqueeze(0)
-            distance = (ra-rb).abs().sum(dim=-1).view(a.shape[0],b.shape[0])
-        elif distance_metric =='l2':
-            ra = a.view(a.shape[0],-1).unsqueeze(1)
-            rb = b.view(b.shape[0],-1).unsqueeze(0)
-            distance = ((ra-rb).norm(dim=-1)).view(a.shape[0],b.shape[0])
+        if distance_metric == 'cosine':
+            distance = 1 - cosine_similarity(a.view(a.shape[0], -1), b.view(b.shape[0], -1))
+        elif distance_metric == 'cosine_abs':
+            distance = 1 - cosine_similarity(a.view(a.shape[0], -1), b.view(b.shape[0], -1)).abs()
+        elif distance_metric == 'l1':
+            ra = a.view(a.shape[0], -1).unsqueeze(1)
+            rb = b.view(b.shape[0], -1).unsqueeze(0)
+            distance = (ra - rb).abs().sum(dim=-1).view(a.shape[0], b.shape[0])
+        elif distance_metric == 'l2':
+            ra = a.view(a.shape[0], -1).unsqueeze(1)
+            rb = b.view(b.shape[0], -1).unsqueeze(0)
+            distance = ((ra - rb).norm(dim=-1)).view(a.shape[0], b.shape[0])
         else:
             raise NotImplementedError
         return distance
@@ -121,7 +124,7 @@ def guidedmix(img,
         y_b = gt_label[rand_index]
 
         features = F.gaussian_blur(features, size, sigma)
-        features /= (features).sum(dim=[-1, -2], keepdim=True)
+        features /= (features.sum(dim=[-1, -2], keepdim=True) + 1e-5)
         features_ = features[rand_index]
 
         if condition == 'greedy':
@@ -130,7 +133,7 @@ def guidedmix(img,
         else:
             raise ValueError("Please check the condition setting in the greedy.")
 
-        norm_features = torch.div(features, (features + features_).detach())
+        norm_features = torch.div(features, (features + features_).detach() + 1e-5)
         lam = norm_features.mean(dim=[-1, -2]).unsqueeze(-1)
         lam_ = 1 - lam
         mask = torch.stack([norm_features] * 3, dim=1)
@@ -146,8 +149,9 @@ class Identity(object):
     def __init__(self):
         pass
 
-    def __call__(self,img):
+    def __call__(self, img):
         return img
+
 
 def series_filter(values, kernel_size=3):
     """
@@ -157,7 +161,7 @@ def series_filter(values, kernel_size=3):
     :param kernel_size:
     :return: The list of filtered average
     """
-    filter_values = torch.cumsum(values,dim=[2,3], dtype=torch.float)
+    filter_values = torch.cumsum(values, dim=[2, 3], dtype=torch.float)
 
     filter_values[kernel_size:] = filter_values[kernel_size:] - filter_values[:-kernel_size]
     filter_values[kernel_size:] = filter_values[kernel_size:] / kernel_size
@@ -166,6 +170,7 @@ def series_filter(values, kernel_size=3):
         filter_values[i] /= i + 1
 
     return filter_values
+
 
 class SpectralResidual(object):
     def __init__(self,
@@ -180,19 +185,21 @@ class SpectralResidual(object):
                                    out_channels=1,
                                    kernel_size=kernel_size,
                                    bias=False,
-                                   padding=int((kernel_size-1)/2),
+                                   padding=int((kernel_size - 1) / 2),
                                    padding_mode='replicate')
-        self.boxfilter.weight= nn.Parameter(torch.ones((1, 1, self.kernel_size, self.kernel_size), dtype=torch.float) / float(self.kernel_size * self.kernel_size), requires_grad=False)
-        self.boxfilter=self.boxfilter.to(device)
+        self.boxfilter.weight = nn.Parameter(
+            torch.ones((1, 1, self.kernel_size, self.kernel_size), dtype=torch.float) / float(
+                self.kernel_size * self.kernel_size), requires_grad=False)
+        self.boxfilter = self.boxfilter.to(device)
         self.to_gray = transforms.Compose([
             transforms.Grayscale(num_output_channels=1),
         ])
-        if blur==0:
-            self.blur=Identity()
+        if blur == 0:
+            self.blur = Identity()
         else:
-            self.blur=transforms.GaussianBlur((blur,blur),(sigma,sigma))
-        self.eps=1e-10
-        self.resize=transforms.Resize((128,128))
+            self.blur = transforms.GaussianBlur((blur, blur), (sigma, sigma))
+        self.eps = 1e-10
+        self.resize = transforms.Resize((128, 128))
 
     def transform_saliency_map(self, values):
         """
@@ -201,12 +208,12 @@ class SpectralResidual(object):
         :param values: a list or numpy array of float values.
         :return: silency map and spectral residual
         """
-        values=self.to_gray(values)
+        values = self.to_gray(values)
         if values.shape[2] > 128:
-            values=self.resize(values)
+            values = self.resize(values)
 
         freq = torch.fft.fft2(values)
-        mag = (freq.real ** 2 + freq.imag ** 2+self.eps).sqrt()
+        mag = (freq.real ** 2 + freq.imag ** 2 + self.eps).sqrt()
         spectral_residual = (mag.log() - self.boxfilter(mag.log())).exp()
 
         freq.real = freq.real * spectral_residual / mag
@@ -220,11 +227,11 @@ class SpectralResidual(object):
         with torch.no_grad():
             saliency_map = self.transform_saliency_map(values)
             spectral_residual = (saliency_map.real ** 2 + saliency_map.imag ** 2).sqrt()
-            spectral_residual=self.blur(spectral_residual)
+            spectral_residual = self.blur(spectral_residual)
             if values.shape[2] > 128:
-                spectral_residual=F.resize(spectral_residual,size=(values.shape[2],values.shape[3]))
+                spectral_residual = F.resize(spectral_residual, size=(values.shape[2], values.shape[3]))
             spectral_residual.squeeze_(1)
-        
+
         # del for using sum-to-1 normalize
         # spectral_residual=(spectral_residual-spectral_residual.min())/(spectral_residual.max()-spectral_residual.min())
 

@@ -16,11 +16,11 @@ img_norm_cfg = dict(mean=[0.382, 0.382, 0.382], std=[0.088, 0.088, 0.088])
 train_pipeline = [
     dict(type='RandomResizedCrop', size=224, interpolation=3),  # bicubic
     dict(type='RandAugment',
-        policies=fixmatch_augment_policies,
-        num_policies=1, total_level=10,
-        magnitude_level=7, magnitude_std=0.5,  # 'rand-m7-mstd0.5'
-        hparams=dict(
-            pad_val=[114, 123, 125], interpolation='bicubic')),
+         policies=fixmatch_augment_policies,
+         num_policies=1, total_level=10,
+         magnitude_level=7, magnitude_std=0.5,  # 'rand-m7-mstd0.5'
+         hparams=dict(
+             pad_val=[114, 123, 125], interpolation='bicubic')),
 ]
 test_pipeline = [
     dict(type='Resize', size=256, interpolation=3),  # 0.85

@@ -17,10 +17,11 @@ from .smmix import smmix
 from .tla import tla
 from .guidedmix import guidedmix
 from .starmix import starmix
+from .starmixplus import starmixplus
 
 __all__ = [
     'alignmix', 'attentivemix', 'cutmix', 'fmix', 'mixup', 'gridmix',
     'puzzlemix', 'resizemix', 'saliencymix', 'smoothmix', 'transmix',
     'snapmix', 'mixpro', 'tokenmix', 'smmix', 'tla', 'guidedmix',
-    'starmix', 'augmix'
+    'starmix', 'augmix', 'starmixplus'
 ]

@@ -25,8 +25,8 @@ class MAdAugBlock(BaseModule):
                  init_cfg=None,
                  **kwargs):
         super(MAdAugBlock, self).__init__(init_cfg)
-        self.p_aug = PolicyNetwork(in_channels=in_channels, noise_std=noise_std, num_classes=num_classes)
-        self.n_aug = NeuralAugmenter(n_subpolicies=subpolicies, threshold=threshold)
+        self.p_aug = PolicyNetwork(n_subpolicies=subpolicies, threshold=threshold)
+        self.n_aug = NeuralAugmenter(in_channels=in_channels, noise_std=noise_std, num_classes=num_classes)
 
         self.init_weights()
 
@@ -131,10 +131,18 @@ class PolicyNetwork(BaseModule):
                     ]
 
     def forward(self, x, y, backbone, head, temperature=0.1):
+        #1. 检查并重置损坏的参数 (p 和 m 都要检查)
+        if torch.isnan(self.p).any() or torch.isnan(self.m).any():
+            print("!!! Critical: Parameters (p or m) are NaN. Resetting...")
+            with torch.no_grad():
+                self.p.copy_(torch.rand_like(self.p))
+                self.m.copy_(torch.rand_like(self.m))
 
+        # probs = F.softmax(self.p.mean(dim=1), dim=0)
+        # subpolicy_idx = torch.multinomial(probs, 1)
         subpolicy_idx = torch.multinomial(self.p.mean(dim=1), 1)
         p_sub = self.p[subpolicy_idx].squeeze(0)
-        m_sub = self.m[subpolicy_idx].squeeze(0)
+        m_sub = self.m[subpolicy_idx].squeeze(0).clamp(0, 10)   # 限制增强强度，防止 numpy 溢出
 
         alpha1 = self._gumbel_softmax(p_sub[0], temperature)
         alpha2 = self._gumbel_softmax(p_sub[1], temperature)
@@ -153,6 +161,10 @@ class PolicyNetwork(BaseModule):
         return x2
 
     def _gumbel_softmax(self, p, temp):
+        # 添加一个极小的 eps，防止 log(0)
+        # 限制 p 的范围在 [eps, 1-eps] 之间
+        p = p.clamp(min=1e-6, max=1 - 1e-6)
+
         u = torch.rand_like(p)
         l = torch.log(p) - torch.log(1-p) + torch.log(u) - torch.log(1-u)
         return 1 / (1 + torch.exp(-l / temp))
@@ -161,10 +173,30 @@ class PolicyNetwork(BaseModule):
         x.requires_grad_()
         pred_out = backbone(x)[-1]
         pred_out = head([pred_out])[0]
+
+        # 防止 pred_out 已经包含 NaN
+        if torch.isnan(pred_out).any():
+            return torch.zeros(x.shape[0], x.shape[2], x.shape[3], device=x.device)
+
         scores = torch.gather(pred_out, 1, y.unsqueeze(1)).squeeze(1)
-        grad = torch.autograd.grad(scores, x, grad_outputs=torch.ones_like(scores))[0]
+        grad = torch.autograd.grad(
+            scores,
+            x,
+            grad_outputs=torch.ones_like(scores),
+            retain_graph=False,
+            create_graph=False
+        )[0]
+
+        # 如果梯度炸了，返回全 0 的 saliency_map
+        if torch.isnan(grad).any():
+            return torch.zeros(x.shape[0], x.shape[2], x.shape[3], device=x.device)
+
         saliency_map = grad.abs().sum(dim=1)
-        return saliency_map
+
+        # 归一化到 [0, 1] 提高稳定性
+        s_max = saliency_map.view(saliency_map.size(0), -1).max(dim=1)[0].view(-1, 1, 1) + 1e-8
+
+        return saliency_map / s_max
     
     def apply_augment(self, images, op, severity):
         augmented_images = []

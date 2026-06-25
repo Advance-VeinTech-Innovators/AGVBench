@@ -1,6 +1,6 @@
 from .adaptive_mask import AdaptiveMask
 from .cls_head import ClsHead, ClsRetNetHead, ClsVGGHead
-from .cls_mixup_head import ClsMixupHead, ClsUncertainMixupHead
+from .cls_mixup_head import ClsMixupHead, ClsUncertainMixupHead, ClsVGGMixupHead
 from .cls_mlp_head import (EfficientFormerClsHead, MetaFormerClsHead, LeViTClsHead, StackedLinearClsHead,
                            VanillaNetClsHead)
 from .contrastive_head import ContrastiveHead, HCRHead
@@ -13,13 +13,13 @@ from .pmix_block import PixelMixBlock
 from .reg_head import RegHead
 from .swav_head import MultiPrototypes, SwAVHead
 from .vision_transformer_head import VisionTransformerClsHead, DistillationVisionTransformerClsHead
-from .teachaug_block import TeachAugModule, ColorEnhance, AffineTransfer
 
+from .teachaug_block import TeachAugModule, ColorEnhance, AffineTransfer
 from .madaug_block import MAdAugBlock, PolicyNetwork, NeuralAugmenter
 from .cls_vein_head import ClsFVRASHead, ClsPVHead, ClsAMPVHead, ClsFVRASMixupHead, ClsPVMixupHead, ClsAMPVMixupHead
 
 __all__ = [
-    'A2MIMHead', 'AdaptiveMask', 'ClsHead', 'ClsMixupHead', 'ClsUncertainMixupHead',
+    'A2MIMHead', 'AdaptiveMask', 'ClsHead', 'ClsMixupHead', 'ClsUncertainMixupHead', 'ClsVGGMixupHead',
     'ContrastiveHead', 'DINOHead',
     'EfficientFormerClsHead', 'HCRHead', 'MetaFormerClsHead', 'LeViTClsHead', 'StackedLinearClsHead', 'VanillaNetClsHead',
     'LatentPredictHead', 'LatentClsHead', 'LatentCrossCorrelationHead',

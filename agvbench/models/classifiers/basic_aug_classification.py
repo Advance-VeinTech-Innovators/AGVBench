@@ -77,19 +77,20 @@ class BasicAugClassification(BaseModel):
         self.aug_args = dict(  # default settings
             cutout=dict(),
             gridmask=dict(n_holes=(2, 6), hole_aspect_ratio=1.,
-                         cut_area_ratio=(0.5, 1), cut_aspect_ratio=(0.5, 2)),
+                          cut_area_ratio=(0.5, 1), cut_aspect_ratio=(0.5, 2)),
             spnoise=dict(prob=0.1, noise_type='random'),
             randomblur=dict(),
             randnquant=dict(region_num=4, collapse_to_val='inside_random', spacing='random'),
-            ricap=dict(choose_num=2,),
+            ricap=dict(choose_num=2, ),
             yoco=dict(),
             softaugment=dict(t_crop=1.0, max_p_crop=1.0, pow_crop=2.0, bg_crop=1, sigma_crop=12,
-                        iou=False, n_classes=220),
-            smdwt_pca=dict(thresholds=(0.55, 0.65), wavelet=('bior1.3', 'bior4.4', 'bior6.8')),
+                             iou=False, n_classes=220),
+            smdwt_pca=dict(wavelet="5/3"),
             keepaugment=dict(threshold=0.5, mode='paste', randaugment_n=2, randaugment_m=9),
             vanilla=dict(),
         )
-        _supported_mode = ["vanilla"] + list(self.masking_mode.keys()) + list(self.cutting_mode.keys()) + list(self.policy_mode.keys())
+        _supported_mode = ["vanilla"] + list(self.masking_mode.keys()) + list(self.cutting_mode.keys()) + list(
+            self.policy_mode.keys())
         for _mode in _supported_mode:
             self.aug_args[_mode].update(aug_args.get(_mode, dict()))  # update aug_args
         for _mode in self.aug_mode:
@@ -168,29 +169,33 @@ class BasicAugClassification(BaseModel):
         cur_mode, cur_alpha = self.aug_mode[cur_idx], self.alpha[cur_idx]
 
         return_mask, mask = False, None  # return sample mask in [N, 1, H, W]
-        
+
         # applying masking sample augmentation methods
         if cur_mode in ["cutout", "gridmask", "spnoise", "randomblur", "randnquant", "smdwt_pca"]:
             if cur_mode in ["cutout", "gridmask", "randomblur"]:
-                img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False, 
-                                                return_mask=return_mask, **self.aug_args[cur_mode])
+                img = self.masking_mode[cur_mode](img, cur_alpha, dist_mode=False,
+                                                  return_mask=return_mask, **self.aug_args[cur_mode])
             elif cur_mode in ["spnoise", "randnquant", "smdwt_pca"]:
-                img = self.masking_mode[cur_mode](img, dist_mode=False, 
-                                                return_mask=return_mask, **self.aug_args[cur_mode])
+                img = self.masking_mode[cur_mode](img, dist_mode=False,
+                                                  return_mask=return_mask, **self.aug_args[cur_mode])
             if return_mask:
                 img, mask = img  # (img, mask): get mask
         elif cur_mode in ["ricap", "yoco"]:
             if cur_mode == 'yoco':
-                img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False, 
+                img = self.cutting_mode[cur_mode](img, cur_alpha, dist_mode=False,
                                                   return_mask=return_mask, **self.aug_args[cur_mode])
             elif cur_mode == 'ricap':
-                img, gt_label = self.cutting_mode[cur_mode](img, gt_label, cur_alpha, dist_mode=False, 
+                img, gt_label = self.cutting_mode[cur_mode](img, gt_label, cur_alpha, dist_mode=False,
                                                             return_mask=return_mask, **self.aug_args[cur_mode])
         elif cur_mode in ["softaugment", "keepaugment"]:
             if cur_mode == 'softaugment':
-                img = self.policy_mode[cur_mode](img, **self.aug_args[cur_mode])
+                img, prob = self.policy_mode[cur_mode](img, **self.aug_args[cur_mode])
             elif cur_mode == 'keepaugment':
-                pred_raw = self.backbone(img)[0].clone().detach()
+                out = self.backbone(img)[0]
+                if isinstance(out, list):
+                    out = out[0]
+                pred_raw = out.clone().detach()
+                # pred_raw = self.backbone(img)[0].clone().detach()
                 img = self.policy_mode[cur_mode](img, gt_label, pred_raw, **self.aug_args[cur_mode])
         else:
             assert cur_mode == "vanilla"
@@ -198,7 +203,10 @@ class BasicAugClassification(BaseModel):
 
         # augmentation loss
         pred_aug = self.head(x)
-        losses = self.head.loss(pred_aug, gt_label)
+        if cur_mode == "ricap":
+            losses = self.head.ricap_loss(pred_aug, gt_label)
+        else:
+            losses = self.head.loss(pred_aug, gt_label)
         losses['loss'] /= self.aug_repeat
 
         # save augmented img
@@ -240,7 +248,6 @@ class BasicAugClassification(BaseModel):
                 remove_idx = cur_idx
 
         return losses
-
 
     def simple_test(self, img):
         """Test without augmentation."""

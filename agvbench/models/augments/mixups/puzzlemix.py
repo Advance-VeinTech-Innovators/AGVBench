@@ -185,15 +185,16 @@ def puzzlemix(img,
         # normal mixup process
         rand_index = torch.randperm(img.size(0)).cuda()
         if len(img.size()) == 4:  # [N, C, H, W]
-            input1 = img.clone()
-            input2 = img[rand_index].clone()
+            input1 = img.clone().cuda()
+            input2 = img[rand_index].clone().cuda()
         else:
             assert img.dim() == 5  # semi-supervised img [N, 2, C, H, W]
             # * notice that the rank of two groups of img is fixed
-            input2 = img[:, 1, ...].contiguous()
-            input1 = img[:, 0, ...].contiguous()
-        y_a = gt_label
-        y_b = gt_label[rand_index]
+            input2 = img[:, 1, ...].contiguous().cuda()
+            input1 = img[:, 0, ...].contiguous().cuda()
+        y_a = gt_label.cuda()
+        y_b = gt_label[rand_index].cuda()
+        features = features.cuda()
     
     if isinstance(block_num, int):
         block_num = (1, block_num)

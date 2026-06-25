@@ -10,6 +10,9 @@ from .seesaw_loss import SeesawLoss
 from .semantic_softmax_loss import SemanticSoftmaxLoss
 from .distillation_loss import DistillationLoss
 from .utils import convert_to_one_hot, weight_reduce_loss, weighted_loss
+# Label Enhancement
+from .lable_enchance_loss import TemperatureSmoothLoss, ConfidencePenaltyLoss, \
+    BootstrappingLoss, DirichletLabelSmoothLoss, OnlineLabelSmoothLoss
 
 __all__ = [
     'ArcFaceLoss',
@@ -20,4 +23,6 @@ __all__ = [
     'focal_l1_loss', 'focal_mse_loss', 'fuzzy_ce_loss', 'general_kl_loss', 'huber_loss', 'kl_loss',
     'SeesawLoss', 'SemanticSoftmaxLoss', 'DistillationLoss',
     'convert_to_one_hot', 'weight_reduce_loss', 'weighted_loss',
+    'TemperatureSmoothLoss', 'ConfidencePenaltyLoss', 'BootstrappingLoss', 
+    'DirichletLabelSmoothLoss', 'OnlineLabelSmoothLoss'
 ]

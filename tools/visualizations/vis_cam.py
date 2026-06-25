@@ -4,7 +4,7 @@ import pkg_resources
 import re
 import mmcv
 import numpy as np
-
+import cv2
 from pathlib import Path
 from PIL import Image
 from mmcv import Config, DictAction
@@ -23,13 +23,12 @@ try:
                                   GradCAMPlusPlus, LayerCAM, XGradCAM)
     from pytorch_grad_cam.activations_and_gradients import \
         ActivationsAndGradients
-    from pytorch_grad_cam.utils.image import show_cam_on_image
 except ImportError:
     raise ImportError('Please run `pip install "grad-cam>=1.3.6"` to install '
                       '3rd party package pytorch_grad_cam.')
 
 # set of transforms, which just change data format, not change the pictures
-FORMAT_TRANSFORMS_SET = {'ToTensor', 'Normalize',}
+FORMAT_TRANSFORMS_SET = {'ToTensor', 'Normalize', }
 
 # Supported grad-cam type map
 METHOD_MAP = {
@@ -53,9 +52,9 @@ def parse_args():
         nargs='+',
         type=str,
         help='The target layers to get CAM, if not set, the tool will '
-        'specify the norm layer in the last block. Backbones '
-        'implemented by users are recommended to manually specify'
-        ' target layers in commmad statement.')
+             'specify the norm layer in the last block. Backbones '
+             'implemented by users are recommended to manually specify'
+             ' target layers in commmad statement.')
     parser.add_argument(
         '--preview-model',
         default=False,
@@ -65,20 +64,20 @@ def parse_args():
         '--method',
         default='GradCAM',
         help='Type of method to use, supports '
-        f'{", ".join(list(METHOD_MAP.keys()))}.')
+             f'{", ".join(list(METHOD_MAP.keys()))}.')
     parser.add_argument(
         '--target-category',
         default=[],
         nargs='+',
         type=int,
         help='The target category to get CAM, default to use result '
-        'get from given model.')
+             'get from given model.')
     parser.add_argument(
         '--eigen-smooth',
         default=False,
         action='store_true',
         help='Reduce noise by taking the first principle componenet of '
-        '``cam_weights*activations``')
+             '``cam_weights*activations``')
     parser.add_argument(
         '--aug-smooth',
         default=False,
@@ -97,17 +96,17 @@ def parse_args():
         '--num-extra-tokens',
         type=int,
         help='The number of extra tokens in ViT-like backbones. Defaults to'
-        ' use num_extra_tokens of the backbone.')
+             ' use num_extra_tokens of the backbone.')
     parser.add_argument(
         '--cfg-options',
         nargs='+',
         action=DictAction,
         help='override some settings in the used config, the key-value pair '
-        'in xxx=yyy format will be merged into config file. If the value to '
-        'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
-        'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
-        'Note that the quotation marks are necessary and that no white space '
-        'is allowed.')
+             'in xxx=yyy format will be merged into config file. If the value to '
+             'be overwritten is a list, it should be like key="[a,b]" or key=a,b '
+             'It also allows nested list/tuple values, e.g. key="[(a,b),(c,d)]" '
+             'Note that the quotation marks are necessary and that no white space '
+             'is allowed.')
     args = parser.parse_args()
     if args.method.lower() not in METHOD_MAP.keys():
         raise ValueError(f'invalid CAM type {args.method},'
@@ -116,12 +115,36 @@ def parse_args():
     return args
 
 
+def show_cam_on_image(img: np.ndarray,
+                      mask: np.ndarray,
+                      use_rgb: bool = False,
+                      colormap: int = cv2.COLORMAP_JET,
+                      image_weight: float = 0.9) -> np.ndarray:
+    heatmap = cv2.applyColorMap(np.uint8(255 * mask), colormap)
+    if use_rgb:
+        heatmap = cv2.cvtColor(heatmap, cv2.COLOR_BGR2RGB)
+    heatmap = np.float32(heatmap) / 255
+
+    if np.max(img) > 1:
+        raise Exception(
+            "The input image should np.float32 in the range [0, 1]")
+
+    if image_weight < 0 or image_weight > 1:
+        raise Exception(
+            f"image_weight should be in the range [0, 1].\
+                Got: {image_weight}")
+
+    cam = img + (1 - image_weight) * heatmap
+
+    cam = cam / np.max(cam)
+    return np.uint8(255 * cam)
+
+
 def build_reshape_transform(model, args):
     """Build reshape_transform for `cam.activations_and_grads`, which is
     necessary for ViT-like networks."""
     # ViT_based_Transformers have an additional clstoken in features
     if not args.vit_like:
-
         def check_shape(tensor):
             assert len(tensor.size()) != 3, \
                 (f"The input feature's shape is {tensor.size()}, and it seems "
@@ -148,7 +171,7 @@ def build_reshape_transform(model, args):
         heat_map_area = tensor.size()[1]
         height, width = to_2tuple(int(math.sqrt(heat_map_area)))
         assert height * height == heat_map_area, \
-            (f"The input feature's length ({heat_map_area+num_extra_tokens}) "
+            (f"The input feature's length ({heat_map_area + num_extra_tokens}) "
              f'minus num-extra-tokens ({num_extra_tokens}) is {heat_map_area},'
              ' which is not a perfect square number. Please check if you used '
              'a wrong num-extra-tokens.')
@@ -186,7 +209,7 @@ def apply_transforms(img_path, pipeline_cfg):
     img = image_transforms(img)
     format_img = format_transforms(img)
 
-    return (format_img, img)
+    return format_img, img
 
 
 class MMActivationsAndGradients(ActivationsAndGradients):
@@ -195,9 +218,10 @@ class MMActivationsAndGradients(ActivationsAndGradients):
     def __call__(self, x):
         self.gradients = []
         self.activations = []
-        results =  self.model(x, mode='test')
+        results = self.model(x, mode='test')
         assert len(results) == 1
         return list(results.values())[0]
+
 
 def init_cam(method, model, target_layers, use_cuda, reshape_transform):
     """Construct the CAM object once, In order to be compatible with mmcls,
@@ -205,7 +229,7 @@ def init_cam(method, model, target_layers, use_cuda, reshape_transform):
 
     GradCAM_Class = METHOD_MAP[method.lower()]
     cam = GradCAM_Class(
-        model=model, target_layers=target_layers, use_cuda=use_cuda)
+        model=model, target_layers=target_layers)
     # Release the original hooks in ActivationsAndGradients to use
     # MMActivationsAndGradients.
     cam.activations_and_grads.release()
@@ -254,11 +278,11 @@ def show_cam_grad(grayscale_cam, src_img, title, out_path=None):
     """fuse src_img and grayscale_cam and show or save."""
     grayscale_cam = grayscale_cam[0, :]
     src_img = np.float32(src_img) / 255
-    visualization_img = show_cam_on_image(
-        src_img, grayscale_cam, use_rgb=False)
+    visualization_img = show_cam_on_image(src_img, grayscale_cam, use_rgb=False)
 
     if out_path:
         mmcv.imwrite(visualization_img, str(out_path))
+        print(f"CAM of Mixing sample has been generated: {out_path}")
     else:
         mmcv.imshow(visualization_img, win_name=title)
 
@@ -297,7 +321,8 @@ def get_default_traget_layers(model, args):
                   'final attention block as target_layer..')
             return [norm_layers[-3]]
     print('Automatically choose the last norm layer as target_layer.')
-    target_layers = [norm_layers[-1]]
+    target_layers = [norm_layers[-3]]
+    print(target_layers)
     return target_layers
 
 
@@ -355,9 +380,9 @@ def main():
         format_img.unsqueeze(0),
         targets,
         eigen_smooth=args.eigen_smooth,
-        aug_smooth=args.aug_smooth)
-    show_cam_grad(
-        grayscale_cam, src_img, title=args.method, out_path=args.save_path)
+        aug_smooth=args.aug_smooth
+    )
+    show_cam_grad(grayscale_cam, src_img, title=args.method, out_path=args.save_path)
 
 
 if __name__ == '__main__':

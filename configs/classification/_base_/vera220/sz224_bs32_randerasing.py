@@ -3,8 +3,8 @@ data_source_cfg = dict(type='ImageNet')
 # ImageNet dataset
 data_train_list = 'data/meta/vera220/train.txt'
 data_train_root = 'data/vera220/train/'
-data_test_list = 'data/meta/vera220/val.txt'
-data_test_root = 'data/vera220/val/'
+data_test_list = 'data/meta/vera220/test.txt'
+data_test_root = 'data/vera220/test/'
 
 dataset_type = 'ClassificationDataset'
 img_norm_cfg = dict(mean=[0.4399, 0.4399, 0.4399], std=[0.114, 0.114, 0.114])

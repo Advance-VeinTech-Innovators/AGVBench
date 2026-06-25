@@ -1,164 +1,209 @@
 # AGVBench
 
-### 🔭 A Comprehensive Benchmark and Analysis of Data Augmentation in Palm Vein Identification
+AGVBench is a benchmark codebase for studying data augmentation in palm-vein and finger-vein identification. It provides training configurations, augmentation implementations, biometric evaluation utilities, and analysis scripts for comparing augmentation strategies across CNN, Transformer, and vein-specific backbones.
 
-## 📌 Research Background & Significance
+## Highlights
 
-### 🌟 Why this benchmark matters?
-- 🔒 **Data Scarcity Challenge**  
-  **Vein image datasets are typically limited due to storage constraints and privacy concerns. Insufficient training samples per class often lead to overfitting in deep learning models (*e.g.*, DNNs, CNNs, ViTs). Data augmentation is critical for expanding training datasets and improving model generalization.**  
-- ⚠️ **Limitations of Current Approaches**  
-  **Existing vein identification research relies heavily on empirical augmentation strategies:**
-  - 🔄 **Majority of papers default to ``MixUp + CutMix`` combinations**
-  - 🎨 **Some studies use basic methods like ``ColorJittering``**
-- These practices lack systematic validation and may underutilize model potential due to suboptimal augmentation choices.
-### 🚀 Our Contribution
-- 📊 **Systematic evaluation of augmentation techniques for vein identification**  
-- 🎯 **Optimal augmentation strategies tailored to different model architectures (CNN/ViT)**  
-- 🧪 **Objective benchmarks to guide researchers away from trial-and-error approaches**
-____
+- Unified benchmark for sample-level, label-level, and vein-specific augmentation methods.
+- Classification and biometric verification evaluation, including EER and FPR@TPR.
+- Robustness and analysis tools for occlusion, corruption, adversarial attack, calibration, t-SNE, CAM, ERF, Fourier, and loss-landscape visualization.
+- Ready-to-run 600-epoch classification configs for multiple vein datasets and backbones.
+- Supports standard CNN/ViT families and vein-oriented architectures such as StarLKNet, FVRASNet, AMPVNet, WTxGRN, FVCNN, PVCNN, and RSNet.
 
-### 💥 News
-- **2025.07.15** We supported a vein-specific augmentation method, **"MAdAugment"[[IEEE TIM 2024]](https://xplorestaging.ieee.org/document/10530126)**.
-- **2025.07.13** We supported compute FPR@TPR for biometric task, and supported **"AMPVNet"[[IEEE TIFS 2024]](https://ieeexplore.ieee.org/document/10474047)**.
-- **2025.07.12** We supported some Randomized Quantization augmentation: **"Randomized Quantization"[[ICCV 2023]](https://arxiv.org/abs/2212.08663)**.
-- **2025.07.11** We supported some policy-based augmentation: **"KeepAugment"[[CVPR 2021]](https://arxiv.org/abs/2011.117781)**, **"TrivialAugment"[[ICCV 2021]](https://arxiv.org/abs/2103.10158)**, **"TeachAugment"[[CVPR 2022]](https://arxiv.org/abs/2202.12513)**, **"SoftAugment"[[CVPR 2023]](https://arxiv.org/abs/2211.04625)**.
-- **2025.07.08** Fixed some bugs and supported **PGD Adversarial Attack** in `calibration_fgsm.py`, We add the training config files for training. Now. you can training the models with supported augmentation methods.
-- **2025.06.23** We update some analysis tools code: `compute_eer.py`, `analyze_sparse.py`, `save_purning_model.py`, `tsne_clustering_visualization.py`, and `draw_eer.py` files for your analysis study. Modify the `classification.py` file in `agvbench/datasets/` for computing the eer score.
-- **2025.06.22** we support two mix augmentation method **"AugMix"[[ICLR 2020]](https://arxiv.org/abs/1912.02781)** and **"StarMixup"[[ICSBI 2025]](https://ieeexplore.ieee.org/abstract/document/11015373/)**. 
-- **2025.06.21** We relase the core codebase files.  
+## News
 
-___
+- 2026-06-25: WeReleased the core codebase `v0.1.0`.
 
+## Installation
 
-### Installation
-
-AGVBench is compatible with **Python 3.6/3.7/3.8/3.9** and **PyTorch >= 1.6**. Here are quick installation steps for development:
+AGVBench is based on PyTorch, MMCV, and OpenMMLab-style configuration files. The current runtime requirements include `mmcv-full`, `timm`, `opencv-python`, `scikit-learn`, `scipy`, `pandas`, `matplotlib`, `seaborn`, and `tensorboard`.
 
 ```shell
-conda create -n agvbench python=3.8 pytorch=1.12 cudatoolkit=11.3 torchvision -c pytorch -y
+conda create -n agvbench python=3.8 pytorch=1.12 torchvision cudatoolkit=11.3 -c pytorch -y
 conda activate agvbench
+
 pip install openmim
 mim install mmcv-full
+
 git clone https://github.com/Advance-VeinTech-Innovators/AGVBench.git
-cd agvbench
-pip install -r requirements/readthedocs.txt
+cd AGVBench
 pip install -r requirements/runtime.txt
 pip install -r requirements/tests.txt
 python setup.py develop
 ```
 
-___
+For a full development environment, install all requirement groups:
 
-### 🐳 1. Augmentation methods
-We divided the augmentations into three types: ``Sample-level``, ``Label-level``, and ``Specific-level``.
-
-- **Sample-level**
-  - Single-sample
-    1. Disruption-based
-       1. [x] Flip
-       2. [x] Rotate
-       3. [x] Blur
-       4. [x] Noisy
-       5. [x] Translation, 
-    2. Policy-based: 
-       1. [x] AutoAugment
-       2. [x] RandAugment
-       3. [x] TeachAugment
-       4. [x] KeepAugment
-       5. [x] SoftAugment
-       6. [x] TrivialAugment
-    3. Cutting-based
-       1. [x] YOCO
-       2. [x] Cutout
-       3. [x] GridMask
-       4. [x] RandomErasing
-       5. [x] Randomized Quantization
-  - Multi-samples
-    1. Static
-       1. [x] Mixup
-       2. [x] CutMix
-       3. [x] Manifold Mixup
-       4. [x] FMix
-       5. [x] GridMix
-       6. [x] ResizeMix
-       7. [x] AugMix
-       8. [x] StarMix
-    2. Dynamic
-       1. [x] SaliencyMix
-       2. [x] PuzzleMix
-       3. [x] GudiedMix
-       4. [x] AutoMix
-  - Generating (*This depends on the difficulty of coding, and if it is difficult to implement, we can choose not to include it.*)
-    1. [ ] GANs
-    2. [ ] Diffusion Model
-- **Label-level**
-  - [x] Label Smooth
-  - [ ] Fuzzy C-Means
-  - [ ] Label Propagation
-  - [ ] Mainifold Learning
-  - [ ] Label Distribution
-  - [ ] Token Labeling
-- **Specific-level**
-  1. [x] StarMix
-  2. [x] MixedAA
-  3. [x] Explainable AI
-  4. [ ] MTPV
-
-### 📊 2. Experiments Settings
-
-- **Datasets**
-
-  | Dataset   | Total Img  | Classes | Train/Test set |   Link   |
-  | --------- | ---------- | ------- | -------------- |--------- |
-  | TJU600    | 12,000     | 600     | 6,000/6,000    | [TJU600](https://cslinzhang.github.io/ContactlessPalm/)         |
-  | VERA220   | 2,200      | 220     | 1,100/1,100    | [VERA220](https://www.idiap.ch/en/scientific-research/data/vera-palmvein)         |
-  | CASIA200  | 1,200      | 200     | 600/600        | [CASIA](http://www.cbsr.ia.ac.cn/english/MS_PalmprintDatabases.asp)         |
-  | HKPU500   | 6,000      | 500     | 3,000/3,000    | [HKPU500](https://www4.comp.polyu.edu.hk/~cslzhang/paper/TIM_10_Feb.pdf)         |
-  
-  We could build a ``Corrpution dataset/policy`` for the test set like ``CIFAR100-C/ImageNet-C``
-- **Backbone**
-  - CNNs
-    - [x] ResNet18/ResNet50: Classic backbone
-    - [x] MobileNet v2: Effeicent backbone for mobile devices
-    - [x] StarLKNet: Large kernel backbone
-    - [x] FVRASNet/AMPVNet: Specific design backbone for vein
-  - ViTs
-    - [x] DeiT (tiny, small, base)
-    - [x] ViT (small, base, large)
-    - [x] Swin (tiny, small, base)
-- **Settings**
-
-  We resize the size of image to 3x224x224...
-    
-  | Optimizer | Batch Size | LR     | Scheduler     | Hyperparameters            |
-  | --------- | ---------- | ------ | -------------- | ------------------------- |
-  | SGD       | 32         | `0.01` | ✅ Cosine     | momentum=0.9, wd=1e-4      |
-  | AdamW     | 32         | `3e-4` | ✅ Cosine     | betas=(0.9, 0.98), wd=1e-2 |
-
-- **Experiments**
-  - [x] 📉 Classification
-  - [x] 🎯 EER
-  - [ ] 💥 Corruption (image perturbations)
-  - [x] ⚔️ Adversarial Attack: FGSM, PGD
-  - [ ] 📊 Quality Assessment: PSNR (Peak Signal-to-Noise Ratio) / SSIM (Structural Similarity Index)
-
-### 🧪 3. Analysis Studies
-
-  - [x] ✂️ Occlusion (cutting-based & masking-based)
-  - [x] 🎯 Calibration
-  - [x] 🛡️ ROC Curves
-  - [ ] ⏱️ Time-Cost (1. Single-img, 2. Total Dataset img for one epoch, 3. Few epochs's mean.)
-  - [x] 🧬 t-SNE Visualization
-  - [x] 🔍 CAM Visualization
-
----
-
-Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), Haiyang Li ([@OceanLee66](https://github.com/OceanLee66)), Jing Chen, Yuming Fu, Hongyu Zhu and Hongchao Liao.
-
-### 😉 Citation
-**🤗 If you feel that our work has contributed to your research, please cite it. Thanks.**  
+```shell
+pip install -r requirements.txt
 ```
+
+## Repository Structure
+
+```text
+agvbench/                 Core datasets, models, augmentations, hooks, losses, and APIs
+configs/classification/   Training configs grouped by dataset, backbone, and augmentation type
+tools/train.py            Training entry point
+tools/test.py             Testing entry point
+tools/analysis_tools/     EER, calibration, attack, corruption, occlusion, FLOPs, and log tools
+tools/visualizations/     Augmentation, CAM, EER, ERF, Fourier, LR, and loss-landscape visualization
+scipts/                   Shell launch scripts for training, testing, extraction, and evaluation
+demo/                     Example augmentation images
+requirements/             Runtime, test, docs, and optional dependencies
+```
+
+Note: the script directory is currently named `scipts` in this repository.
+
+## Supported Datasets
+
+The current configuration tree provides classification configs for:
+
+| Dataset | Config path |
+| --- | --- |
+| CASIA200 | `configs/classification/casia200` |
+| FV-USM | `configs/classification/fv_usm` |
+| HKPU500 | `configs/classification/hkpu500` |
+| SCUT1100 | `configs/classification/scut1100` |
+| SDUMLA-HMT | `configs/classification/sdumla_hmt` |
+| TJU600 | `configs/classification/tju600` |
+| VERA220 | `configs/classification/vera220` |
+
+The benchmark assumes an image classification style data layout and uses the dataset definitions in `agvbench/datasets/`.
+
+
+## Augmentation Methods
+
+AGVBench organizes augmentation methods into sample-level, label-level, and vein-specific categories.
+
+### Basic and Policy Augmentations
+
+Implemented under `agvbench/models/augments/basic/` and classification pipelines:
+
+- Blur
+- Cutout
+- GridMask
+- KeepAugment
+- Noise
+- Randomized Quantization
+- RICAP
+- SMDWT-PCA
+- SoftAugment
+- YOCO
+- Flip
+- Rotation
+- Translation
+- Random Erasing
+- AutoAugment
+- RandAugment
+- TeachAugment
+- TrivialAugment
+
+### Mix-Based Augmentations
+
+Implemented under `agvbench/models/augments/mixups/`:
+
+- AlignMix
+- AttentiveMix
+- AugMix
+- CutMix
+- FMix
+- GridMix
+- GuidedMix
+- MixPro
+- Mixup
+- PuzzleMix
+- ResizeMix
+- SaliencyMix
+- SMMix
+- SmoothMix
+- SnapMix
+- StarMix
+- TLA
+- TokenMix
+- TransMix
+
+### Label-Level Methods
+
+Current label-level configs and losses support:
+
+- Label Smoothing
+- Online Label Smoothing
+- Dirichlet Label Smoothing
+- Confidence Penalty
+- Bootstrapping
+
+Related losses are implemented in `agvbench/models/losses/`, including cross entropy, focal loss, ArcFace loss, label smoothing loss, label enhancement loss, and distillation loss.
+
+## Configuration Coverage
+
+Most benchmark configs follow this layout:
+
+```text
+configs/classification/{dataset}/{backbone}/600ep/
+```
+
+Common config groups include:
+
+- `basic/`: basic and policy augmentation configs.
+- `mixups/`: mix-based augmentation configs.
+- `label/`: label-level augmentation configs.
+- Top-level `*_vanilla_*`, `*_autoaug_*`, `*_randaug_*`, `*_madaug_*`, and related files for common training settings.
+
+Examples:
+
+```text
+configs/classification/scut1100/starlknet/600ep/starlknet_s_vanilla_sz224_bs32.py
+configs/classification/scut1100/starlknet/600ep/basic/starlknet_s_cutout.py
+configs/classification/scut1100/starlknet/600ep/mixups/starlknet_s_starmix.py
+configs/classification/scut1100/starlknet/600ep/label/starlknet_s_labelsmooth.py
+```
+
+## Started
+
+### Training and Evaluation Scripts
+
+Here, we provide scripts for starting a quick end-to-end training with multiple `GPUs` and the specified `CONFIG_FILE`. 
+```shell
+bash tools/dist_train.sh ${CONFIG_FILE} ${GPUS} [optional arguments]
+```
+For example, you can run the script below to train a ResNet-50 classifier on ImageNet with 4 GPUs:
+```shell
+CUDA_VISIBLE_DEVICES=0,1,2,3 PORT=29500 bash tools/dist_train.sh configs/classification/scut1100/starlknet/600ep/starlknet_s_vanilla_sz224_bs32.py 4
+```
+After training, you can test the trained models with the corresponding evaluation script:
+```shell
+bash tools/dist_test.sh ${CONFIG_FILE} ${GPUS} ${PATH_TO_MODEL} [optional arguments]
+```
+
+## Evaluation and Analysis Tools
+
+The current version includes:
+
+- `tools/analysis_tools/compute_eer.py`: biometric EER and related verification metrics.
+- `tools/analysis_tools/calibration_fgsm.py`: calibration analysis and FGSM/PGD adversarial attack evaluation.
+- `tools/analysis_tools/corruption.py`: corruption robustness evaluation.
+- `tools/analysis_tools/occlusion_robustness.py`: occlusion robustness analysis.
+- `tools/analysis_tools/count_parameters.py`: parameter counting.
+- `tools/analysis_tools/get_flops.py`: FLOPs computation.
+- `tools/analysis_tools/tsne_clustering_visualization.py`: t-SNE feature visualization.
+- `tools/analysis_tools/analyze_logs.py` and `merge_logs.py`: log analysis utilities.
+- `tools/analysis_tools/analyze_sparse.py` and `save_purning_model.py`: sparsity and pruning utilities.
+
+Visualization tools:
+
+- `tools/visualizations/vis_aug.py`
+- `tools/visualizations/vis_cam.py`
+- `tools/visualizations/vis_eer.py`
+- `tools/visualizations/vis_erf.py`
+- `tools/visualizations/vis_fourier.py`
+- `tools/visualizations/vis_loss_landscape.py`
+- `tools/visualizations/vis_lr.py`
+
+## Citation
+
+If AGVBench is useful for your research, please cite the related work:
+
+```bibtex
 @article{jin2024starlknet,
   title={StarLKNet: star Mixup with large kernel networks for palm vein identification},
   author={Jin, Xin and Zhu, Hongyu and Yacoubi, Moun{\^\i}m A El and Li, Haiyang and Liao, Hongchao and Qin, Huafeng and Jiang, Yun},
@@ -176,63 +221,10 @@ Current contributors include: Xin Jin ([@JinXins](https://github.com/JinXins)), 
 }
 ```
 
-___
+## Contributors
 
-| 模块 | 建议 |
-| --- | ---- |
-| **Label-level 增强模块** | 可以考虑明确每种标签增强的输入需求。例如 FCM/LP/Manifold 依赖 feature embedding，建议加一句：`requires extracted features from pretrained encoder.` |
-| **Corruption Dataset**  | 可构建类 ImageNet-C 的测试扰动集，建议稍微细化一下该模块的结构。例如：`blur, brightness, jpeg, occlusion, salt&pepper, contrast` 这类扰动类型。 |
-| **Manifold 方法说明** | 加入 manifold learning，在文档中补充一小段解释其原理与作用，例如：“We utilize manifold-preserving neighborhood label propagation to generate smooth label distributions from UMAP-embedded features.” |
-| **更多分析指标** | 如 `Expected Calibration Error (ECE)` 或 `Brier Score` 等作为 calibration 的补充；
-|
+Current contributors include Xin Jin ([@JinXins](https://github.com/JinXins)), Haiyang Li ([@OceanLee66](https://github.com/OceanLee66)). We thank all public contributors and contributors from MMPreTrain (MMSelfSup and MMClassification) and OpenMixup team!
 
+## License
 
-### Label Enhancement Methods
-| 维度          |  FCM  |  LP  | Manifold |     LS     |
-| ------------- | ---- | ---- | --------- | ---------- |
-| 是否依赖标签   | ❌   | ✅  | 可选       | ✅        |
-| 是否依赖邻接图 | ❌   | ✅  | ✅        | ❌        |
-| 是否全局一致性 | ✅   | ✅  | ❌（局部） | ✅        |
-| 是否适合半监督 | ✅   | ✅  | ✅        | ⛔（需GT） |
-
-___
-
-
-## Questions
-
-1. 是否需要扩展到指静脉？
-2. 是否需要分开Vein-sepcific的数据增强方法？
-  
-## Paper Plan
-**Titles**
-| Type | Examples |
-| --- | ------- |
-| Scholar     | **AGVBench: A Systematic Benchmark for Data Augmentation in Vein Biometrics**           |
-| Project     | **Revisiting Data Augmentation in Palm Vein Recognition: A Comprehensive Benchmark**    |
-| Experiments | **What Works in Vein Recognition? A Comparative Study of Data Augmentation Techniques** |
-
-
-**Framework & Content**
-1. **Abstract**
-2. **Introduction**
-3. **Related Work**
-4. **Overview of AGVBench**
-     1. **Problem Formulation**
-     2. **Method Taxonomy: Sample-Level, Label-Level, Specific-Level**
-5. **Experimental Setup**
-     1. **Datasets and Preprocessing**
-     2. **Model Architectures**
-     3. **Training Protocols**
-6. **Systematic Evaluation of Augmentation Strategies**
-     1. **Classification**
-     2. **EER**
-     3. **Corruption**
-     4. **FGSM, PGD**
-     5. **PSNR, SSIM**
-7. **Analysis and Visualization**
-     1. **Occlusion Robustness**
-     2. **Calibration**
-     3. **ROC**
-     4. **t-SNE & CAM**
-8. **Ablation and Discussions**
-9.  **Conclusion and Future Work**
+This project follows the Apache Software License metadata declared in `setup.py`.

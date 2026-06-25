@@ -3,7 +3,7 @@ data_source_cfg = dict(type='ImageNet')
 # ImageNet dataset
 data_train_list = 'data/meta/hkpu500/train.txt'
 data_train_root = 'data/hkpu500/train/'
-data_test_list = 'data/meta/hkpu500/val.txt'
+data_test_list = 'data/meta/hkpu500/test.txt'
 data_test_root = 'data/hkpu500/val/'
 
 dataset_type = 'ClassificationDataset'

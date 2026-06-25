@@ -10,7 +10,6 @@ from .smdwt import smdwt_pca
 from .yoco import yoco
 
 __all__ = [
-    'randomblur',  'spnoise', 'randnquant', 
-    'cutout', 'gridmask', 'ricap', 'yoco',
+    'randomblur',  'spnoise', 'randnquant', 'cutout', 'gridmask', 'ricap', 'yoco',
     'keepaugment', 'softaugment', 'smdwt_pca',
 ]
